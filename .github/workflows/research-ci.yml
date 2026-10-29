@@ -56,6 +56,7 @@ jobs:
               assert exp_d['continuum_hierarchy_verified'], f'Failed hierarchy in {p}: {exp_d}'
               assert exp_d['intrinsic_unsupervised_gauge_openness']['monotonic_intrinsic_ordering'], f'Failed intrinsic gauge ordering in {p}: {exp_d}'
               assert exp_d['llm_cross_modal_code_prose_alignment']['cross_modal_alignment_verified'], f'Failed LLM cross-modal alignment in {p}: {exp_d}'
+              assert exp_d['llm_reverse_explanation_ranking']['reverse_explanation_ranking_verified'], f'Failed LLM reverse explanation ranking in {p}: {exp_d}'
               assert d['experiment_h_transformer_pretrain']['compute_dividend_verified'], f'Failed compute dividend in {p}'
           print('ALL OPEN-WEIGHTS LLM & TRANSFORMER PRETRAIN ASSERTIONS VERIFIED!')
           "

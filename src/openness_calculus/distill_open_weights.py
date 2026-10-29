@@ -562,6 +562,15 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
         steps=220,
     )
 
+    from .reverse_explanation import evaluate_llm_reverse_explanation_ranking
+
+    reverse_explain_llm = evaluate_llm_reverse_explanation_ranking(
+        model=model,
+        tokenizer=tokenizer,
+        target_layer=target_layer,
+        steps=180,
+    )
+
     return {
         "model_name": model_name,
         "hidden_dim": dim,
@@ -584,6 +593,7 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
             "omega_open_poetry_irony": round(omega_poetic, 4),
         },
         "llm_cross_modal_code_prose_alignment": cross_modal_llm,
+        "llm_reverse_explanation_ranking": reverse_explain_llm,
         "distillation_normalized_mse": round(mse_total, 5),
         "distillation_cosine_similarity": round(cosine_sim, 4),
         "continuum_hierarchy_verified": bool(omega_code < omega_prose < omega_poetic),
@@ -667,6 +677,10 @@ def main() -> None:
         run_experiment_k_cross_modal_crystallization,
         run_experiment_l_held_out_code_spillover,
     )
+    from .reverse_explanation import (
+        run_experiment_m_reverse_explanation_selection,
+        run_experiment_n_mdl_law_discovery,
+    )
 
     parser = argparse.ArgumentParser(description="Run Openness Calculus (Omega-Algebra) benchmarks.")
     parser.add_argument("--open-weights-model", type=str, default="", help="Optional HuggingFace model ID to dissect")
@@ -686,6 +700,8 @@ def main() -> None:
         "experiment_j_concise_code_explanation_synthesis": run_experiment_j_concise_code_explanation_synthesis(),
         "experiment_k_cross_modal_crystallization": run_experiment_k_cross_modal_crystallization(),
         "experiment_l_held_out_code_spillover": run_experiment_l_held_out_code_spillover(),
+        "experiment_m_reverse_explanation_selection": run_experiment_m_reverse_explanation_selection(),
+        "experiment_n_mdl_law_discovery": run_experiment_n_mdl_law_discovery(),
     }
     if args.open_weights_model:
         report["experiment_d_open_weights_llm"] = run_experiment_d_open_weights_llm(args.open_weights_model)

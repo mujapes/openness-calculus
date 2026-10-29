@@ -25,6 +25,10 @@ from openness_calculus.llm_crystallization import (
     run_experiment_k_cross_modal_crystallization,
     run_experiment_l_held_out_code_spillover,
 )
+from openness_calculus.reverse_explanation import (
+    run_experiment_m_reverse_explanation_selection,
+    run_experiment_n_mdl_law_discovery,
+)
 from openness_calculus.omega_layer import OmegaContinuumLayer, default_continuum_specs
 
 
@@ -98,6 +102,16 @@ class TestOmegaContinuum(unittest.TestCase):
         res = run_experiment_l_held_out_code_spillover(dim=40, steps=240)
         self.assertTrue(res["unpaired_novel_domain_spillover_verified"], msg=f"Novel domain spillover failed: {res}")
         self.assertGreater(res["novel_domain_code_spillover_ratio"], 4.0)
+
+    def test_reverse_explanation_selection(self) -> None:
+        res = run_experiment_m_reverse_explanation_selection(dim=40, num_programs=64, steps=200)
+        self.assertTrue(res["reverse_explanation_selection_verified"], msg=f"Reverse explanation selection failed: {res}")
+        self.assertGreaterEqual(res["top1_concise_selection_accuracy"], 0.95)
+
+    def test_mdl_spectral_law_discovery(self) -> None:
+        res = run_experiment_n_mdl_law_discovery(dim=40, true_rank=4, steps=240)
+        self.assertTrue(res["mdl_law_discovery_verified"], msg=f"MDL law discovery failed: {res}")
+        self.assertGreaterEqual(res["spectral_weight_compression_ratio"], 2.5)
 
 
 if __name__ == "__main__":
