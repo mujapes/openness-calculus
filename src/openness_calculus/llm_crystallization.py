@@ -93,10 +93,17 @@ def run_llm_cross_modal_alignment(
     torch.manual_seed(1111)
     n_pairs, dim = h_prose_seq.shape
 
-    d_cat = torch.cat([d_prose_seq, d_code_seq], dim=0)
-    d_std = d_cat.std().clamp_min(1e-6)
-    dp_norm = d_prose_seq / d_std
-    dc_norm = d_code_seq / d_std
+    # Center and standardize inputs and transitions per modality to remove the
+    # pre-trained LLM's constant residual-stream bias / rogue dimensions
+    hp_c = h_prose_seq - h_prose_seq.mean(dim=0, keepdim=True)
+    hc_c = h_code_seq - h_code_seq.mean(dim=0, keepdim=True)
+    hp_norm = hp_c / hp_c.std().clamp_min(1e-6)
+    hc_norm = hc_c / hc_c.std().clamp_min(1e-6)
+
+    dp_c = d_prose_seq - d_prose_seq.mean(dim=0, keepdim=True)
+    dc_c = d_code_seq - d_code_seq.mean(dim=0, keepdim=True)
+    dp_norm = dp_c / dp_c.std().clamp_min(1e-6)
+    dc_norm = dc_c / dc_c.std().clamp_min(1e-6)
 
     with torch.no_grad():
         raw_cross_modal_cos = F.cosine_similarity(dp_norm, dc_norm, dim=-1).mean().item()
@@ -110,11 +117,11 @@ def run_llm_cross_modal_alignment(
     )
     loss_fn = OmegaActionLoss(peeling_weight=0.40)
     inv_fn = CrossModalInvarianceLoss()
-    opt = torch.optim.AdamW(omega_layer.parameters(), lr=3.5e-3, weight_decay=1e-4)
+    opt = torch.optim.AdamW(omega_layer.parameters(), lr=3.0e-3, weight_decay=1e-4)
 
     for _ in range(steps):
-        out_p = omega_layer(h_prose_seq)
-        out_c = omega_layer(h_code_seq)
+        out_p = omega_layer(hp_norm)
+        out_c = omega_layer(hc_norm)
 
         ld_p = loss_fn(out_p, dp_norm, omega_layer.action_costs)
         ld_c = loss_fn(out_c, dc_norm, omega_layer.action_costs)
@@ -135,13 +142,14 @@ def run_llm_cross_modal_alignment(
         )
         opt.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(omega_layer.parameters(), max_norm=2.0)
         opt.step()
 
     # Now train a Symbolic State Readout Probe ONLY on the English Prose representations,
     # and evaluate it ZERO-SHOT on the Python Code representations!
     with torch.no_grad():
-        out_p_eval = omega_layer(h_prose_seq)
-        out_c_eval = omega_layer(h_code_seq)
+        out_p_eval = omega_layer(hp_norm)
+        out_c_eval = omega_layer(hc_norm)
 
         core_p = out_p_eval["closed_core_output"]
         core_c = out_c_eval["closed_core_output"]
