@@ -39,7 +39,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .omega_layer import OmegaContinuumLayer, default_continuum_specs
+from .omega_layer import OmegaBandSpec, OmegaContinuumLayer, default_continuum_specs
 from .objectives import OmegaActionLoss, PrimalDualOpennessController
 from .bidirectional_duality import BidirectionalOmegaDuality
 
@@ -49,10 +49,16 @@ class GradedOmegaSheaf(nn.Module):
     E = {(0,1), (1,2), (0,2)}, with restriction maps stratified by omega in [0, 1].
     """
 
-    def __init__(self, dim: int = 40, num_bands: int = 5) -> None:
+    def __init__(self, dim: int = 48, num_bands: int = 5) -> None:
         super().__init__()
         self.dim = dim
-        self.specs = default_continuum_specs(dim, num_bands=num_bands)
+        self.specs = [
+            OmegaBandSpec(omega=0.00, rank=6, kind="algebraic", action_cost=0.00),
+            OmegaBandSpec(omega=0.25, rank=6, kind="relational", action_cost=0.15),
+            OmegaBandSpec(omega=0.50, rank=8, kind="homomorphic", action_cost=0.35),
+            OmegaBandSpec(omega=0.75, rank=10, kind="homomorphic", action_cost=0.65),
+            OmegaBandSpec(omega=1.00, rank=dim, kind="open_residual", action_cost=1.00),
+        ]
         self.omega_values = torch.tensor([s.omega for s in self.specs], dtype=torch.float32)
 
         # Shared sheaf restriction transport operator across discourse edges
