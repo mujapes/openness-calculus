@@ -93,22 +93,18 @@ def run_llm_cross_modal_alignment(
     torch.manual_seed(1111)
     n_pairs, dim = h_prose_seq.shape
 
-    # Center and standardize inputs and transitions per modality to remove the
-    # pre-trained LLM's constant residual-stream bias / rogue dimensions
-    hp_c = h_prose_seq - h_prose_seq.mean(dim=0, keepdim=True)
-    hc_c = h_code_seq - h_code_seq.mean(dim=0, keepdim=True)
-    hp_norm = hp_c / hp_c.std().clamp_min(1e-6)
-    hc_norm = hc_c / hc_c.std().clamp_min(1e-6)
+    # Per-clause feature LayerNorm (dim=-1) eliminates LLM residual-stream scale/rogue-dimension
+    # saturation while preserving full rank across the batch of clause pairs (dim=0).
+    hp_norm = F.layer_norm(h_prose_seq, (dim,))
+    hc_norm = F.layer_norm(h_code_seq, (dim,))
+    dp_norm = F.layer_norm(d_prose_seq, (dim,))
+    dc_norm = F.layer_norm(d_code_seq, (dim,))
 
-    dp_c = d_prose_seq - d_prose_seq.mean(dim=0, keepdim=True)
-    dc_c = d_code_seq - d_code_seq.mean(dim=0, keepdim=True)
-    dp_norm = dp_c / dp_c.std().clamp_min(1e-6)
-    dc_norm = dc_c / dc_c.std().clamp_min(1e-6)
+    sym_centered = symbolic_targets - symbolic_targets.mean(dim=0, keepdim=True)
 
     with torch.no_grad():
         raw_cross_modal_cos = F.cosine_similarity(dp_norm, dc_norm, dim=-1).mean().item()
-        raw_mid = 0.5 * (dp_norm + dc_norm)
-        shared_mid = raw_mid / raw_mid.std().clamp_min(1e-6)
+        shared_mid = F.layer_norm(0.5 * (dp_norm + dc_norm), (dim,))
 
     omega_layer = OmegaContinuumLayer(
         dim=dim,
@@ -117,7 +113,7 @@ def run_llm_cross_modal_alignment(
     )
     loss_fn = OmegaActionLoss(peeling_weight=0.40)
     inv_fn = CrossModalInvarianceLoss()
-    opt = torch.optim.AdamW(omega_layer.parameters(), lr=3.0e-3, weight_decay=1e-4)
+    opt = torch.optim.AdamW(omega_layer.parameters(), lr=3.5e-3, weight_decay=1e-4)
 
     for _ in range(steps):
         out_p = omega_layer(hp_norm)
@@ -163,13 +159,13 @@ def run_llm_cross_modal_alignment(
     # Fit ridge-regularized linear probes on Prose -> Symbolic Targets
     reg_eye = 0.05 * torch.eye(dim)
     # 1. Baseline probe trained on raw LLM Prose transition dp_norm
-    w_raw = torch.linalg.solve(dp_norm.t() @ dp_norm + reg_eye, dp_norm.t() @ symbolic_targets)
+    w_raw = torch.linalg.solve(dp_norm.t() @ dp_norm + reg_eye, dp_norm.t() @ sym_centered)
     # 2. Omega probe trained on Omega Closed Core Prose transition core_p
-    w_core = torch.linalg.solve(core_p.t() @ core_p + reg_eye, core_p.t() @ symbolic_targets)
+    w_core = torch.linalg.solve(core_p.t() @ core_p + reg_eye, core_p.t() @ sym_centered)
 
     with torch.no_grad():
-        zero_shot_raw_code_mse = F.mse_loss(dc_norm @ w_raw, symbolic_targets).item()
-        zero_shot_omega_code_mse = F.mse_loss(core_c @ w_core, symbolic_targets).item()
+        zero_shot_raw_code_mse = F.mse_loss(dc_norm @ w_raw, sym_centered).item()
+        zero_shot_omega_code_mse = F.mse_loss(core_c @ w_core, sym_centered).item()
 
     return {
         "raw_prose_code_cosine_similarity": round(raw_cross_modal_cos, 4),
