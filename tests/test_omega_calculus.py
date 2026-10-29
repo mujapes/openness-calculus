@@ -23,6 +23,7 @@ from openness_calculus.sheaf_logic import (
 )
 from openness_calculus.llm_crystallization import (
     run_experiment_k_cross_modal_crystallization,
+    run_experiment_l_held_out_code_spillover,
 )
 from openness_calculus.omega_layer import OmegaContinuumLayer, default_continuum_specs
 
@@ -92,6 +93,11 @@ class TestOmegaContinuum(unittest.TestCase):
         res = run_experiment_k_cross_modal_crystallization(dim=48)
         self.assertTrue(res["cross_modal_alignment_verified"], msg=f"Cross-modal crystallization failed: {res}")
         self.assertGreater(res["zero_shot_probe_improvement_ratio"], 2.0)
+
+    def test_unpaired_novel_domain_code_spillover(self) -> None:
+        res = run_experiment_l_held_out_code_spillover(dim=40, steps=240)
+        self.assertTrue(res["unpaired_novel_domain_spillover_verified"], msg=f"Novel domain spillover failed: {res}")
+        self.assertGreater(res["novel_domain_code_spillover_ratio"], 4.0)
 
 
 if __name__ == "__main__":

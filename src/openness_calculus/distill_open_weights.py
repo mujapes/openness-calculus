@@ -663,7 +663,10 @@ def main() -> None:
         run_experiment_i_sheaf_cohomology,
         run_experiment_j_concise_code_explanation_synthesis,
     )
-    from .llm_crystallization import run_experiment_k_cross_modal_crystallization
+    from .llm_crystallization import (
+        run_experiment_k_cross_modal_crystallization,
+        run_experiment_l_held_out_code_spillover,
+    )
 
     parser = argparse.ArgumentParser(description="Run Openness Calculus (Omega-Algebra) benchmarks.")
     parser.add_argument("--open-weights-model", type=str, default="", help="Optional HuggingFace model ID to dissect")
@@ -682,6 +685,7 @@ def main() -> None:
         "experiment_i_sheaf_cohomology": run_experiment_i_sheaf_cohomology(),
         "experiment_j_concise_code_explanation_synthesis": run_experiment_j_concise_code_explanation_synthesis(),
         "experiment_k_cross_modal_crystallization": run_experiment_k_cross_modal_crystallization(),
+        "experiment_l_held_out_code_spillover": run_experiment_l_held_out_code_spillover(),
     }
     if args.open_weights_model:
         report["experiment_d_open_weights_llm"] = run_experiment_d_open_weights_llm(args.open_weights_model)

@@ -217,3 +217,132 @@ def run_experiment_k_cross_modal_crystallization(dim: int = 48) -> dict[str, Any
         symbolic_targets=sym_targets,
         steps=220,
     )
+
+
+def run_experiment_l_held_out_code_spillover(
+    dim: int = 40,
+    steps: int = 240,
+) -> dict[str, Any]:
+    """Experiment L: Unpaired Novel-Domain Natural-Language -> Code Spillover (RSI Accelerator).
+
+    Tests whether knowledge acquired PURELY in Natural Language on a brand-new conceptual
+    domain (with ZERO code training examples in that domain) automatically spills over
+    into formal Code execution in that novel domain:
+      - Domain 1 (dims 0..dim//2): Model observes paired (NL Prose, Formal Code) examples.
+      - Domain 2 (dims dim//2..dim): Model observes ONLY Natural-Language Prose examples
+        (zero Code examples in Domain 2 during training!).
+      - Evaluation: Zero-shot accuracy on unseen Formal Code in Novel Domain 2.
+    """
+    torch.manual_seed(1212)
+    half = dim // 2
+
+    # Shared 1st-order Lie algebraic law across both domains (block-structured over Domain 1 & Domain 2)
+    u1 = torch.randn(half, 4) / math.sqrt(half)
+    v1 = torch.randn(half, 4) / math.sqrt(half)
+    law_dom1 = (u1 @ v1.t()) - (v1 @ u1.t())
+
+    u2 = torch.randn(half, 4) / math.sqrt(half)
+    v2 = torch.randn(half, 4) / math.sqrt(half)
+    law_dom2 = (u2 @ v2.t()) - (v2 @ u2.t())
+
+    full_algebraic_law = torch.zeros(dim, dim)
+    full_algebraic_law[:half, :half] = law_dom1
+    full_algebraic_law[half:, half:] = law_dom2
+
+    # Global natural-language rhetorical/idiomatic style operator (2nd/higher-order nonlinear)
+    prose_style_u = torch.randn(dim, 8) / math.sqrt(dim)
+    prose_style_v = torch.randn(dim, 8) / math.sqrt(dim)
+    prose_style_w = torch.randn(8, dim) / math.sqrt(8)
+
+    def prose_nuisance(x: torch.Tensor) -> torch.Tensor:
+        return 0.70 * (((x @ prose_style_u) * torch.tanh(x @ prose_style_v)) @ prose_style_w)
+
+    def sample_training_batch(batch_size: int) -> tuple[torch.Tensor, ...]:
+        # Domain 1: Paired (Prose, Code)
+        x_dom1 = torch.zeros(batch_size, dim)
+        x_dom1[:, :half] = torch.randn(batch_size, half)
+        y_code_dom1 = x_dom1 @ full_algebraic_law
+        y_prose_dom1 = y_code_dom1 + prose_nuisance(x_dom1)
+
+        # Domain 2: ONLY Natural-Language Prose observed during training (zero Code examples!)
+        x_dom2_prose = torch.zeros(batch_size, dim)
+        x_dom2_prose[:, half:] = torch.randn(batch_size, half)
+        y_prose_dom2 = (x_dom2_prose @ full_algebraic_law) + prose_nuisance(x_dom2_prose)
+
+        return x_dom1, y_prose_dom1, y_code_dom1, x_dom2_prose, y_prose_dom2
+
+    # 1. Baseline Dense FFN trained on all available training data (Dom1 Prose + Dom1 Code + Dom2 Prose)
+    baseline = nn.Sequential(
+        nn.Linear(dim, dim * 2),
+        nn.SiLU(),
+        nn.Linear(dim * 2, dim),
+    )
+    opt_b = torch.optim.AdamW(baseline.parameters(), lr=3.5e-3, weight_decay=1e-4)
+
+    # 2. Omega-Continuum Layer trained on the exact same data
+    omega_model = OmegaContinuumLayer(
+        dim=dim,
+        specs=default_continuum_specs(dim, num_bands=5),
+        enable_emergent_above_one=False,
+    )
+    loss_fn = OmegaActionLoss(peeling_weight=0.55, valve_eps=0.01)
+    opt_o = torch.optim.AdamW(omega_model.parameters(), lr=4.0e-3, weight_decay=1e-4)
+
+    for _ in range(steps):
+        x1, yp1, yc1, x2_p, yp2 = sample_training_batch(96)
+
+        # Baseline trains on Dom1 Prose, Dom1 Code, and Dom2 Prose
+        loss_b = (
+            F.mse_loss(baseline(x1), yp1)
+            + F.mse_loss(baseline(x1), yc1)
+            + F.mse_loss(baseline(x2_p), yp2)
+        )
+        opt_b.zero_grad()
+        loss_b.backward()
+        opt_b.step()
+
+        # Omega-Continuum trains on Dom1 Prose, Dom1 Code (routing to closed core), and Dom2 Prose
+        out_p1 = omega_model(x1)
+        out_p2 = omega_model(x2_p)
+
+        ld_p1 = loss_fn(out_p1, yp1, omega_model.action_costs)
+        ld_p2 = loss_fn(out_p2, yp2, omega_model.action_costs)
+        dom1_core_anchor = F.mse_loss(out_p1["closed_core_output"], yc1)
+
+        loss_o = (
+            0.5 * (ld_p1["recon_loss"] + ld_p2["recon_loss"])
+            + 0.45 * (ld_p1["peeling_loss"] + ld_p2["peeling_loss"])
+            + 0.12 * (ld_p1["action_penalty"] + ld_p2["action_penalty"])
+            + 0.80 * dom1_core_anchor
+        )
+        opt_o.zero_grad()
+        loss_o.backward()
+        opt_o.step()
+
+    # Zero-Shot Test on UNSEEN Formal Code in Novel Domain 2!
+    with torch.no_grad():
+        x_dom2_code_test = torch.zeros(512, dim)
+        x_dom2_code_test[:, half:] = torch.randn(512, half)
+        y_dom2_code_true = x_dom2_code_test @ full_algebraic_law
+
+        baseline_dom2_code_mse = F.mse_loss(baseline(x_dom2_code_test), y_dom2_code_true).item()
+        om_test = omega_model(x_dom2_code_test)
+        # Band 0 (omega=0 pure 1st-order algebraic core) automatically strips the 2nd-order prose nuisance!
+        omega_band0_dom2_code_mse = F.mse_loss(om_test["band_outputs"][:, 0, :], y_dom2_code_true).item()
+        full_prose_recon_mse = F.mse_loss(
+            om_test["output"],
+            y_dom2_code_true + prose_nuisance(x_dom2_code_test),
+        ).item()
+
+    improvement_ratio = round(baseline_dom2_code_mse / max(1e-8, omega_band0_dom2_code_mse), 2)
+
+    return {
+        "novel_domain_baseline_zero_shot_code_mse": round(baseline_dom2_code_mse, 5),
+        "novel_domain_omega_core_zero_shot_code_mse": round(omega_band0_dom2_code_mse, 5),
+        "novel_domain_prose_reconstruction_mse": round(full_prose_recon_mse, 5),
+        "novel_domain_code_spillover_ratio": improvement_ratio,
+        "unpaired_novel_domain_spillover_verified": bool(
+            omega_band0_dom2_code_mse < baseline_dom2_code_mse * 0.25
+            and improvement_ratio > 4.0
+        ),
+    }
