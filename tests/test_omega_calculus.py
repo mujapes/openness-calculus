@@ -29,6 +29,10 @@ from openness_calculus.reverse_explanation import (
     run_experiment_m_reverse_explanation_selection,
     run_experiment_n_mdl_law_discovery,
 )
+from openness_calculus.rsi_flywheel import (
+    run_experiment_o_compositional_program_synthesis,
+    run_experiment_p_bidirectional_rsi_flywheel,
+)
 from openness_calculus.omega_layer import OmegaContinuumLayer, default_continuum_specs
 
 
@@ -112,6 +116,16 @@ class TestOmegaContinuum(unittest.TestCase):
         res = run_experiment_n_mdl_law_discovery(dim=40, true_rank=4, steps=240)
         self.assertTrue(res["mdl_law_discovery_verified"], msg=f"MDL law discovery failed: {res}")
         self.assertGreaterEqual(res["spectral_weight_compression_ratio"], 2.5)
+
+    def test_compositional_program_synthesis(self) -> None:
+        res = run_experiment_o_compositional_program_synthesis(dim=36, reg_rank=8, steps=240)
+        self.assertTrue(res["compositional_synthesis_verified"], msg=f"Compositional synthesis failed: {res}")
+        self.assertGreaterEqual(res["compositional_mse_improvement_ratio"], 2.2)
+
+    def test_bidirectional_rsi_flywheel(self) -> None:
+        res = run_experiment_p_bidirectional_rsi_flywheel(dim=32, reg_rank=6, num_generations=4, steps_per_gen=160)
+        self.assertTrue(res["bidirectional_rsi_flywheel_verified"], msg=f"Bidirectional RSI flywheel failed: {res}")
+        self.assertGreaterEqual(res["final_gen_omega_verified_cosine"], 0.94)
 
 
 if __name__ == "__main__":

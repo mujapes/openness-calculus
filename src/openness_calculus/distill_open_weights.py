@@ -681,6 +681,10 @@ def main() -> None:
         run_experiment_m_reverse_explanation_selection,
         run_experiment_n_mdl_law_discovery,
     )
+    from .rsi_flywheel import (
+        run_experiment_o_compositional_program_synthesis,
+        run_experiment_p_bidirectional_rsi_flywheel,
+    )
 
     parser = argparse.ArgumentParser(description="Run Openness Calculus (Omega-Algebra) benchmarks.")
     parser.add_argument("--open-weights-model", type=str, default="", help="Optional HuggingFace model ID to dissect")
@@ -702,6 +706,8 @@ def main() -> None:
         "experiment_l_held_out_code_spillover": run_experiment_l_held_out_code_spillover(),
         "experiment_m_reverse_explanation_selection": run_experiment_m_reverse_explanation_selection(),
         "experiment_n_mdl_law_discovery": run_experiment_n_mdl_law_discovery(),
+        "experiment_o_compositional_program_synthesis": run_experiment_o_compositional_program_synthesis(),
+        "experiment_p_bidirectional_rsi_flywheel": run_experiment_p_bidirectional_rsi_flywheel(),
     }
     if args.open_weights_model:
         report["experiment_d_open_weights_llm"] = run_experiment_d_open_weights_llm(args.open_weights_model)
