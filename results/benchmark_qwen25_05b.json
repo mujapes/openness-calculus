@@ -1,0 +1,186 @@
+{
+  "experiment_a_minimum_openness": {
+    "closed_logic_mean_omega": 0.0045,
+    "bounded_relational_mean_omega": 0.548,
+    "open_pragmatic_mean_omega": 0.7671,
+    "reconstruction_mse": 0.018359,
+    "monotonic_ordering_verified": true
+  },
+  "experiment_b_anti_cannibalization": {
+    "teacher_effective_rank": 23.07,
+    "naive_gen5": {
+      "generation": 5,
+      "mse_vs_original": 0.16144,
+      "effective_rank": 6.2
+    },
+    "omega_gen5": {
+      "generation": 5,
+      "mse_vs_original": 0.04953,
+      "effective_rank": 14.77,
+      "closed_band_energy_fraction": 0.562
+    },
+    "naive_history": [
+      {
+        "generation": 1,
+        "mse_vs_original": 0.06077,
+        "effective_rank": 6.71
+      },
+      {
+        "generation": 2,
+        "mse_vs_original": 0.07556,
+        "effective_rank": 6.36
+      },
+      {
+        "generation": 3,
+        "mse_vs_original": 0.09883,
+        "effective_rank": 6.32
+      },
+      {
+        "generation": 4,
+        "mse_vs_original": 0.13097,
+        "effective_rank": 6.23
+      },
+      {
+        "generation": 5,
+        "mse_vs_original": 0.16144,
+        "effective_rank": 6.2
+      }
+    ],
+    "omega_history": [
+      {
+        "generation": 1,
+        "mse_vs_original": 0.02414,
+        "effective_rank": 20.05,
+        "closed_band_energy_fraction": 0.3527
+      },
+      {
+        "generation": 2,
+        "mse_vs_original": 0.032,
+        "effective_rank": 18.51,
+        "closed_band_energy_fraction": 0.3921
+      },
+      {
+        "generation": 3,
+        "mse_vs_original": 0.04087,
+        "effective_rank": 17.02,
+        "closed_band_energy_fraction": 0.4257
+      },
+      {
+        "generation": 4,
+        "mse_vs_original": 0.04596,
+        "effective_rank": 15.98,
+        "closed_band_energy_fraction": 0.4787
+      },
+      {
+        "generation": 5,
+        "mse_vs_original": 0.04953,
+        "effective_rank": 14.77,
+        "closed_band_energy_fraction": 0.562
+      }
+    ],
+    "anti_cannibalization_verified": true
+  },
+  "experiment_c_code_spillover": {
+    "zero_shot_baseline_code_mse": 0.14687,
+    "zero_shot_omega_closed_core_code_mse": 0.05286,
+    "few_shot_baseline_code_mse": 0.10546,
+    "few_shot_omega_closed_core_code_mse": 0.02842,
+    "zero_shot_improvement_ratio": 2.78,
+    "spillover_speedup_ratio": 3.71,
+    "spillover_verified": true
+  },
+  "experiment_e_bidirectional_duality": {
+    "round_trip_verifiability_mse": 0.01982,
+    "relative_round_trip_error": 0.0937,
+    "concise_explanation_mean_omega": 0.0745,
+    "bidirectional_duality_verified": true
+  },
+  "experiment_f_emergent_superoperators": {
+    "four_hop_to_one_step_mse": 0.00618,
+    "four_hop_to_one_step_cosine": 0.9252,
+    "superoperator_routing_entropy": 0.4479,
+    "depth_compression_factor": 4.0,
+    "level2_renormalized_omega": 0.0141,
+    "level2_renormalized_cosine": 0.9801,
+    "emergent_tower_verified": true
+  },
+  "experiment_g_sequence_state_tracking": {
+    "sequence_length": 6,
+    "baseline_per_step_code_mse": 0.01412,
+    "omega_closed_core_per_step_code_mse": 0.00761,
+    "baseline_6step_cumulative_drift": 0.35007,
+    "omega_6step_cumulative_drift": 0.1306,
+    "cumulative_drift_reduction_factor": 2.68,
+    "sequence_spillover_verified": true
+  },
+  "experiment_h_transformer_pretrain": {
+    "standard_transformer_code_mse": 0.14833,
+    "omega_transformer_closed_core_code_mse": 0.07656,
+    "few_shot_standard_code_mse": 0.00823,
+    "few_shot_omega_code_mse": 0.02787,
+    "zero_shot_code_mse_improvement_ratio": 1.94,
+    "standard_steps_to_target": 6,
+    "omega_steps_to_target": 1,
+    "pretrain_compute_dividend_speedup": 6.0,
+    "closed_core_energy_crystallization": 0.7594,
+    "mean_symbolic_openness_omega": 0.2389,
+    "compute_dividend_verified": true
+  },
+  "experiment_d_open_weights_llm": {
+    "model_name": "Qwen/Qwen2.5-0.5B",
+    "hidden_dim": 896,
+    "dissected_layer": 12,
+    "tokens_analyzed": 435,
+    "intrinsic_unsupervised_gauge_openness": {
+      "formal_code": {
+        "conditional_continuation_surprisal": 0.0858,
+        "normalized_predictive_entropy": 0.0853,
+        "pragmatic_gauge_drift": 0.0056,
+        "intrinsic_omega": 0.1394
+      },
+      "causal_prose": {
+        "conditional_continuation_surprisal": 0.2023,
+        "normalized_predictive_entropy": 0.1898,
+        "pragmatic_gauge_drift": 0.0159,
+        "intrinsic_omega": 0.3221
+      },
+      "open_poetry_irony": {
+        "conditional_continuation_surprisal": 0.3994,
+        "normalized_predictive_entropy": 0.3709,
+        "pragmatic_gauge_drift": 0.0109,
+        "intrinsic_omega": 0.624
+      },
+      "monotonic_intrinsic_ordering": true
+    },
+    "compositional_holonomy": {
+      "formal_code": {
+        "holonomy_defect": 0.0821,
+        "lie_wedge_sine": 0.8164,
+        "subspace_defect": 0.3416,
+        "intrinsic_holonomy_omega": 0.3543
+      },
+      "causal_prose": {
+        "holonomy_defect": 0.0632,
+        "lie_wedge_sine": 0.7905,
+        "subspace_defect": 0.3354,
+        "intrinsic_holonomy_omega": 0.3358
+      },
+      "open_poetry_irony": {
+        "holonomy_defect": 0.059,
+        "lie_wedge_sine": 0.8104,
+        "subspace_defect": 0.2747,
+        "intrinsic_holonomy_omega": 0.3276
+      }
+    },
+    "distilled_omega_profile": {
+      "omega_formal_code": 0.4085,
+      "omega_causal_prose": 0.4214,
+      "omega_open_poetry_irony": 0.5561
+    },
+    "distillation_normalized_mse": 0.0532,
+    "distillation_cosine_similarity": 0.9809,
+    "continuum_hierarchy_verified": true,
+    "elapsed_sec": 104.56
+  },
+  "total_runtime_sec": 116.55
+}

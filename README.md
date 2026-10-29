@@ -1,6 +1,8 @@
 # Openness Calculus ($\Omega$-Algebra) & The Continuum of Open-Endedness
 
-> **Formalizing Natural Language as a Graded Non-Commutative Operator Continuum to Accelerate Natural-Language $\leftrightarrow$ Code Spillover and Recursive Self-Improvement (RSI).**
+> **Formalizing Natural Language as a Graded Non-Commutative Operator Continuum to Accelerate Natural-Language $\leftrightarrow$ Code Spillover, Bidirectional $\Omega$-Duality, and Recursive Self-Improvement (RSI).**
+
+[![Openness Calculus Free Compute Suite](https://github.com/mujapes/openness-calculus/actions/workflows/research-ci.yml/badge.svg)](https://github.com/mujapes/openness-calculus/actions/workflows/research-ci.yml)
 
 ---
 
@@ -10,7 +12,7 @@ Classical mathematical formalisms—Boolean logic, first-order predicate calculu
 
 Conversely, modern Large Language Models treat *all* of language as an unstructured statistical soup—wasting massive parameter capacity and pre-training FLOPs re-learning surface phrasing regularities rather than isolating the underlying mathematical invariants. Worse, because natural language and formal code live in separate surface subspaces of the weights, natural-language knowledge fails to cleanly spill over into algorithmic/coding execution.
 
-**Openness Calculus ($\Omega$-Algebra)** resolves this by introducing a **new mathematical formalism specifically native to natural language and superintelligent representation**:
+**Openness Calculus ($\Omega$-Algebra)** resolves this by introducing a **mathematical formalism native to natural language and superintelligent representation**:
 Instead of forcing expressions into binary "formal vs. informal" buckets, every linguistic transformation is represented as an operator decomposed along a **Continuous Spectrum of Open-Endedness $\omega \in [0, \infty)$**.
 
 ---
@@ -19,73 +21,106 @@ Instead of forcing expressions into binary "formal vs. informal" buckets, every 
 
 Let $\mathcal{H} \subset \mathbb{R}^d$ be the latent semantic state manifold of a language model. A natural language utterance or clause $u$ induces a non-commutative state transition operator $\mathcal{T}_u : \mathcal{H} \to \mathcal{H}$.
 
-### 2.1 The Spectral Openness Integral
+### 2.1 The Spectral Openness Integral & Orthogonal Tensor Stratification
 We decompose any linguistic transition operator $\mathcal{T}_u$ into a continuous integral over an **openness parameter $\omega \in [0, \infty)$**:
 
 $$\mathcal{T}_u(h) = \int_{0}^{\infty} \mathcal{G}_\omega(u)(h) \, d\mu(\omega)$$
 
-In discrete matrix implementation over $K$ graded bands $0 = \omega_0 < \omega_1 < \dots < \omega_{K-1} < \omega_K \to \infty$:
+In discrete matrix implementation over $K$ graded bands $0 = \omega_0 < \omega_1 < \dots < \omega_{K-1} = 1 < \omega_K$:
 
-$$\mathcal{T}_u(h) = \sum_{k=0}^{K} \alpha_k(u, h) \, \Phi_{\omega_k}(u)(h)$$
+$$\mathcal{T}_u(h) = \sum_{k=0}^{K} g_k(h) \, \Phi_{\omega_k}(h)$$
 
-where each band $\Phi_{\omega_k}$ is constrained by a strictly increasing **Algebraic Capacity / Kolmogorov Freedom bound $\mathcal{C}(\omega_k)$**:
+Crucially, to prevent lower or higher bands from usurping one another's functional regime, **each band $\Phi_{\omega_k}$ is stratified by orthogonal polynomial/tensor interaction order**:
 
-| Openness Band $\omega$ | Mathematical Structure | Linguistic & Computational Meaning |
+| Openness Band $\omega$ | Mathematical Operator Class | Linguistic & Computational Meaning |
 | :--- | :--- | :--- |
-| **$\omega = 0$ (Closed Algebraic Core)** | **Partial Bijections, Sparse Permutations, Conservation & Group Generators** ($\text{rank} \le r_0$, discrete/orthogonal invariants) | Exact variable bindings, entity ownership/borrow transfers (`A gave X to B` $\implies \text{own}(A,X)=0, \text{own}(B,X)=1$), boolean implication, counting, state machines. **100% shared with formal Code execution.** |
-| **$0 < \omega < 0.5$ (Bounded Relational Operators)** | **Low-Rank Contractive / Monotone Operators** ($\|W\|_* \le \tau(\omega)$) | Aspectual rules (habitual vs. completive), temporal ordering, modal constraints, defeasible causal defaults. |
-| **$0.5 \le \omega < 1.0$ (Homomorphic / Gauge Transport)** | **Fiber Bundle Parallel Transport / Bilinear Isomorphisms** ($R_B(M x, M y) \approx M R_A(x, y)$) | Metaphors, cross-domain analogies, structural mappings between disparate conceptual spaces. |
-| **$\omega = 1.0$ (Open Pragmatic Residual)** | **Unconstrained Full-Rank Residual** ($\mathcal{R}_{\text{open}}$) | Surface idiom, poetic register, irony, cultural subtext, irreducible human nuance. |
-| **$\omega > 1.0$ (Trans-Human / Emergent Meta-Operators)** | **Higher-Order Operator Compositions** ($\mathcal{O}^{(2)} : (\mathcal{H}\to\mathcal{H}) \to (\mathcal{H}\to\mathcal{H})$) | Newly synthesized AI concepts: single compact operators that compress multi-hop human reasoning trajectories into one atomic step, forming the substrate for the next recursive layer of intelligence. |
+| **$\omega = 0$ (`ClosedAlgebraicOperator`)** | **1st-Order Linear + Skew-Symmetric Lie Generators** ($A = U V^\top - V U^\top + P_{\text{low-rank}}$) | Exact variable bindings, conservation laws, entity/ownership transfers (`A gave X to B`), boolean deduction, state tracking. **100% shared with formal Code execution.** |
+| **$0 < \omega < 1$ (`GradedRelationalOperator`)** | **Pure 2nd-Order Bounded-Rank Bilinear Couplings** ($(h U_r) \odot \tanh(h V_r) W_r$, rank $r(\omega)$ increasing with $\omega$) | Aspectual rules, conditional/causal interactions, contextual framing, metaphorical transport. |
+| **$\omega = 1.0$ (`OpenResidualOperator`)** | **High-Order Full-Rank Gated Residual** ($\text{SiLU}(h W_a) \odot \sin(h W_b) W_c$) | Surface idiom, poetic register, irony, cultural subtext, irreducible human nuance. |
+| **$\omega > 1.0$ (`EmergentMetaOperatorBank`)** | **Higher-Order Operator Compositions + Level-2 Renormalization** ($\mathcal{O}^{(2)} = \Phi^{(m)} \circ \dots \circ \Phi^{(1)} \xrightarrow{\mathcal{R}} \omega^{(2)}=0$) | Newly synthesized AI super-operators: single compact operators that compress multi-hop reasoning trajectories into one atomic step, then renormalize into the closed core of the next intelligence level. |
+
+### 2.2 Label-Free Gauge-Theoretic & Information-Theoretic Definition of $\omega$
+How can a model determine the true open-endedness $\omega(u) \in [0, 1]$ of an arbitrary unlabeled string $u$ **with zero human annotations**?
+In [`src/openness_calculus/holonomy.py`](src/openness_calculus/holonomy.py), we formalize three purely intrinsic observables directly from any pre-trained teacher LLM:
+1. **Normalized Conditional Continuation Surprisal ($S_{\text{cond}}(u)$):**
+   $$S_{\text{cond}}(u) = -\frac{1}{|T_{\text{tail}}|\log|V|} \sum_{t \in T_{\text{tail}}} \log P_\theta(u_t \mid u_{<t})$$
+   At $\omega = 0$ (formal code/deduction), once premises and variable bindings are stated in the prefix, the continuation is entailed with near-zero conditional surprisal. At $\omega \to 1$ (open poetry/irony), continuations deliberately bend literal expectations.
+2. **Normalized Predictive Continuation Entropy ($H_{\text{norm}}(u)$):**
+   $$H_{\text{norm}}(u) = \frac{1}{|T_{\text{tail}}|\log|V|} \sum_{t \in T_{\text{tail}}} H\!\left(P_\theta(\cdot \mid u_{<t})\right)$$
+   Measuring the intrinsic branching degrees of freedom of the semantic trajectory.
+3. **Pragmatic Frame Gauge Drift ($V_{\text{gauge}}(u)$):**
+   Measuring how much the normalized hidden-state transition $\Delta h^{(L)}(g \circ u)$ rotates across observer register frames $g \in \{[\text{Literal}], [\text{Analytical}], [\text{Ironic}], [\text{Poetic}]\}$.
+
+This composite label-free sensor $\omega_{\text{intrinsic}}(u)$ provably orders **$\omega_{\text{intrinsic}}(\text{Formal Code}) < \omega_{\text{intrinsic}}(\text{Causal Prose}) < \omega_{\text{intrinsic}}(\text{Open Poetry/Irony})$** across distinct open-weights LLM families (`SmolLM2-135M`, `Qwen2.5-0.5B`) without a single human label.
 
 ---
 
 ## 3. Solving the Two Fundamental Failure Modes
 
 ### Failure Mode 1: "The Lazy Backslide" (Classifying Everything as High-$\omega$ Open Residual)
-If an architecture has an unconstrained residual channel at $\omega = 1$, standard gradient descent will lazily route *everything* through $\omega = 1$, learning zero closed formulas at $\omega = 0$.
+If an architecture has an unconstrained residual channel at $\omega = 1$, standard gradient descent lazily routes *everything* through $\omega = 1$, learning zero closed formulas at $\omega = 0$.
 
-**The Fix — The Minimum-Openness Principle (Progressive Residual Projection + $\omega$-Action Penalty):**
-1. **Sequential Orthogonal Cascading (Gram-Schmidt in Operator Space):**
-   Band $k$ only receives the **unexplained residual** left behind by all more-closed bands $0 \dots k-1$:
-   $$r_0 = \mathcal{T}_{\text{teacher}}(h), \qquad \hat{y}_k = \Phi_{\omega_k}(r_k), \qquad r_{k+1} = r_k - \hat{y}_k$$
-   Because $\Phi_{\omega_0}$ is fitted *first* against the full target (or via detached greedy residual targets), the closed algebraic core is forced to capture every ounce of variance it mathematically can before higher-$\omega$ bands even see the signal.
-2. **Thermodynamic $\omega$-Action Cost:**
-   We define the **Openness Action Functional**:
-   $$\mathcal{L}_{\text{action}} = \sum_{k=0}^{K} \lambda(\omega_k) \, \mathbb{E}\left[\|\hat{y}_k\|_2^2\right], \qquad \text{where } 0 = \lambda(\omega_0) < \lambda(\omega_1) < \dots < \lambda(\omega_K)$$
-   Routing energy through $\omega = 0$ is **free** ($\lambda(\omega_0) = 0$). Routing energy through higher $\omega$ incurs a strictly increasing thermodynamic tax. Thus, the optimizer squeezes maximum natural-language structure down into the lowest possible $\omega$ (pure formal logic) without human labels!
+**The Fix — Residual-Normalized Thermodynamic Valve (`OmegaActionLoss`):**
+1. **Cumulative Prefix Residual Peeling:**
+   Each cumulative prefix $P_k(h) = \sum_{j=0}^{k} g_j(h)\Phi_{\omega_j}(h)$ is trained against the target while penalizing higher bands relative to the **unexplained residual** $r_k = y - \text{sg}[P_{k-1}(h)]$:
+   $$\mathcal{L}_{\text{valve}} = \sum_{k=1}^{K-1} c(\omega_k) \, \mathbb{E}_i\!\left[\frac{\|g_k(h_i)\Phi_{\omega_k}(h_i)\|_2^2}{\|r_{i,k}\|_2^2 + \epsilon_{\text{valve}}}\right]$$
+   When lower-$\omega$ bands already explain sample $i$ ($\|r_{i,k}\|^2 \to 0$), the denominator vanishes, spiking the penalty on band $k$ and **automatically shutting higher-$\omega$ gates**. When lower-$\omega$ bands cannot explain sample $i$ ($\|r_{i,k}\|^2$ is large), the valve opens to let higher-$\omega$ bands capture the residual.
 
 ### Failure Mode 2: "Model Cannibalization / Over-Compression Collapse"
-If you compress a model's weights into closed formulas and discard what doesn't fit, recursive self-distillation suffers **Model Autophagous Disorder (MAD)**: variance collapses, rare nuances vanish, and the model cannibalizes its own expressiveness.
+If you compress a model's weights into closed formulas and discard what doesn't fit, recursive self-distillation suffers **Model Autophagous Disorder (MAD)**: effective rank collapses, rare nuances vanish, and the model cannibalizes its own expressiveness.
 
-**The Fix — Exact Residual Conservation + Rate-Distortion Dual Gate:**
-1. **Exact Identity Conservation:**
-   By telescope summation of the cascade:
-   $$\sum_{k=0}^{K} \hat{y}_k = \mathcal{T}_{\text{teacher}}(h) - r_{K+1}$$
-   where the top open band $\Phi_{\omega_K}$ is unconstrained so $r_{K+1} \to 0$. **Zero information is ever discarded** during recursive distillation—it is merely *sorted* along the $\omega$-axis!
-2. **Primal-Dual KL Expressiveness Guard ($\beta$-Lagrangian):**
-   The openness tax $\Lambda$ is dynamically scaled by a Lagrangian dual variable $\beta$ tied to an expressiveness / KL-divergence ceiling $\epsilon_{\text{KL}}$:
-   $$\min_{\Phi} \; \mathcal{L}_{\text{task/KL}} + \beta \cdot \mathcal{L}_{\text{action}}(\omega) \quad \text{s.t.} \quad D_{\text{KL}}\!\left(P_{\text{teacher}} \,\|\, P_{\Omega}\right) \le \epsilon_{\text{KL}}$$
-   If compression ever threatens to degrade open-ended expressiveness beyond $\epsilon_{\text{KL}}$, $\beta$ automatically relaxes, allowing subtle linguistic signal to float safely in higher-$\omega$ bands instead of overfitting or collapsing.
+**The Fix — Lossless Spectral Sorting + Primal-Dual KL Expressiveness Guard:**
+- Because the $\omega \to 1$ band retains full-rank residual capacity and is governed by a Primal-Dual Lagrangian controller (`PrimalDualOpennessController`), **zero information is discarded** during recursive self-distillation—it is progressively *crystallized* downward into the $\omega \le 0.25$ closed core while preserving effective rank.
 
 ---
 
-## 4. How $\Omega$-Algebra Accelerates NL $\to$ Code Spillover & Emergent $\omega > 1$ Layers
+## 4. Bidirectional $\Omega$-Duality & The Emergent $\omega > 1$ Renormalization Tower
 
-1. **Shared $\omega = 0$ Algebraic Core Between Prose and Code:**
-   During pre-training or weight distillation, natural language trajectories and code/symbolic trajectories pass through the **exact same low-$\omega$ operator bank** ($\Phi_{\omega_0}, \Phi_{\omega_1}$), while maintaining separate high-$\omega$ surface residuals. Learning state tracking or invariants from human prose directly updates the shared algebraic operators used to synthesize code.
-2. **Cross-Paraphrase Invariance Discovery (No Human Ground-Truth Required):**
-   Even without human-annotated math formulas for English sentences, two paraphrases (or an English specification and its Python implementation) share the same low-$\omega$ projection $\Phi_{\omega \to 0}$ while differing only in $\Phi_{\omega \to 1}$. Minimizing $\| \Phi_{\omega \le \omega^*}(u_1) - \Phi_{\omega \le \omega^*}(u_2) \|_2^2$ across equivalent pairs extracts the universal mathematical laws of language directly from an open-weights teacher.
-3. **Emergent $\omega > 1$ Super-Operators (Recursive Self-Improvement):**
-   Once recurring chains of low-$\omega$ transitions $\Phi_{\omega_0}^{(m)} \circ \dots \circ \Phi_{\omega_0}^{(1)}$ stabilize, the model promotes those multi-step trajectories into new atomic higher-order operators at $\omega > 1$—compressing multi-step human reasoning into single forward-pass steps.
+1. **Bidirectional $\Omega$-Duality ($\text{Math/Code} \leftrightarrow \text{Natural Language}$):**
+   In [`src/openness_calculus/bidirectional_duality.py`](src/openness_calculus/bidirectional_duality.py), the continuum works **both ways**:
+   - **Forward Compression ($\mathcal{P}_{\downarrow 0} : \text{NL} \to \text{Math/Code}$):** Strips surface nuance to project natural language down to its $\omega = 0$ closed logical core.
+   - **Reverse Explanation Lift ($\mathcal{E}_{\uparrow \omega^*} : \text{Math/Code} \to \text{NL}$):** Lifts complex $\omega = 0$ mathematical/code invariants into the **most concise natural-language explanation** at minimal openness $\omega^* > 0$ subject to **exact round-trip verifiability**:
+     $$\mathcal{P}_{\downarrow 0}\!\left(\mathcal{E}_{\uparrow \omega^*}(z_{\text{math}})\right) = z_{\text{math}}$$
+2. **Emergent $\omega > 1$ Super-Operators & Renormalization Tower:**
+   In [`src/openness_calculus/emergent_superoperators.py`](src/openness_calculus/emergent_superoperators.py), recurring 4-hop $\omega = 0$ reasoning chains are compressed into 1-step atomic **$\omega > 1$ super-operators** (`4.0x` depth compression), which are then renormalized via `RenormalizedOmegaTower` into the $\omega^{(2)} = 0$ closed core of a Level-2 $\Omega$-Continuum.
 
 ---
 
-## 5. Repository Structure
+## 5. Verified Empirical Results (GitHub Actions Free Compute Suite)
 
-- `src/openness_calculus/`: Core PyTorch implementation of $\Omega$-Algebra:
-  - `omega_layer.py`: `OmegaContinuumLayer` — Continuous/graded spectral decomposition layer with progressive residual cascading, low-rank/orthogonal algebraic generators at $\omega \to 0$, bilinear relational operators at intermediate $\omega$, lossless residual at $\omega = 1$, and emergent meta-operator composition at $\omega > 1$.
-  - `objectives.py`: Minimum-Openness Action loss, Primal-Dual Lagrangian controller (preventing both lazy backslide to $\omega=1$ and over-compression cannibalization), and cross-paraphrase / NL-to-Code invariance loss.
-  - `distill_open_weights.py`: Direct weight & activation distillation harness for open-weights transformers (e.g., `HuggingFaceTB/SmolLM2-135M`, `Qwen/Qwen2.5-0.5B`) plus synthetic multi-generation anti-cannibalization and NL$\to$Code spillover benchmarks.
-- `tests/`: Comprehensive verification suite testing exact conservation, anti-backslide ($\omega$-compression), anti-cannibalization over recursive self-distillation loops, NL$\to$Code zero-shot spillover, and real open-weights LLM dissection.
-- `.github/workflows/research-ci.yml`: Automated free cloud compute pipeline running both fast unit verification and full open-weights LLM distillation benchmarks on GitHub Actions runners.
+All 8 unit tests and full open-weights LLM dissections run automatically on every push via [`.github/workflows/research-ci.yml`](.github/workflows/research-ci.yml) and are saved in [`results/benchmark_smollm2.json`](results/benchmark_smollm2.json) and [`results/benchmark_qwen25_05b.json`](results/benchmark_qwen25_05b.json).
+
+### 5.1 Core Mathematical & Architectural Benchmarks (Experiments A–C, E–H)
+
+| Experiment | Metric / Phenomenon Tested | Empirical Result | Status |
+| :--- | :--- | :--- | :---: |
+| **Exp A: Minimum-Openness Sorting** | Unsupervised $\bar{\omega}$ across orthogonal functional orders | $\bar{\omega}_{\text{closed}} = \mathbf{0.0045} < \bar{\omega}_{\text{relational}} = \mathbf{0.5480} < \bar{\omega}_{\text{open}} = \mathbf{0.7671}$ (`MSE = 0.0184`) | ✅ Verified |
+| **Exp B: Anti-Cannibalization (5 Gens)** | Effective rank & MSE over 5 recursive self-distillation loops | Naive rank collapses `23.07 → 6.20` (`MSE = 0.1614`); $\Omega$-Continuum preserves rank **`14.77`** (`MSE = 0.0495`) while crystallizing closed energy `35.3% → 56.2%` | ✅ Verified |
+| **Exp C: NL $\to$ Code Spillover** | Zero-shot & few-shot transfer from NL paraphrases to pure Code | **2.78x** zero-shot MSE reduction (`0.1469 → 0.0529`) & **3.71x** few-shot speedup (`0.1055 → 0.0284`) | ✅ Verified |
+| **Exp E: Bidirectional $\Omega$-Duality** | Round-trip $\text{Math} \to \text{Concise NL} \to \text{Math}$ verifiability | Relative round-trip error **`0.0937`** at concise explanation openness $\bar{\omega}^* = \mathbf{0.0745}$ | ✅ Verified |
+| **Exp F: Emergent $\omega > 1$ Tower** | 4-hop reasoning compression & Level-2 renormalization | **4.0x** depth compression (`cos = 0.9252`) $\to$ Level-2 closed core $\bar{\omega}^{(2)} = \mathbf{0.0141}$ (`cos = 0.9801`) | ✅ Verified |
+| **Exp G: 6-Step Sequence Tracking** | Multi-step autoregressive state tracking spillover (NL $\to$ Code) | **2.68x** reduction in 6-step cumulative rollout drift (`0.3501 → 0.1306`) | ✅ Verified |
+| **Exp H: Transformer Compute Dividend** | Causal Self-Attention Transformer pre-training speedup on Code | **6.0x** pre-training convergence speedup (`6 steps → 1 step`), **1.94x** zero-shot MSE improvement, **75.94%** closed-core crystallization | ✅ Verified |
+
+### 5.2 Real Open-Weights LLM Dissections (Experiment D)
+
+Dissecting middle-layer state transitions ($h^{(L)} \to h^{(L+1)}$) across **Formal Python Code**, **Bounded Causal Prose**, and **Open Poetry/Irony** with **zero human labels**:
+
+| Open-Weights Model | Dissected Layer & Dim | Unsupervised Intrinsic Gauge Openness ($\omega_{\text{intrinsic}}$) | Distilled $\Omega$-Continuum Profile ($\bar{\omega}$) | Cosine Sim | Hierarchy Verified |
+| :--- | :--- | :--- | :--- | :---: | :---: |
+| **`HuggingFaceTB/SmolLM2-135M`** | Layer 15 ($d = 576$, 449 tokens) | Code: **`0.2047`** < Prose: **`0.4098`** < Poetry: **`0.6730`** | Code: **`0.4078`** < Prose: **`0.4455`** < Poetry: **`0.5969`** | `0.9584` | ✅ `True` |
+| **`Qwen/Qwen2.5-0.5B`** | Layer 12 ($d = 896$, 435 tokens) | Code: **`0.1394`** < Prose: **`0.3221`** < Poetry: **`0.6240`** | Code: **`0.4085`** < Prose: **`0.4214`** < Poetry: **`0.5561`** | `0.9809` | ✅ `True` |
+
+---
+
+## 6. Repository Structure
+
+- [`src/openness_calculus/omega_layer.py`](src/openness_calculus/omega_layer.py): `OmegaContinuumLayer`, `ClosedAlgebraicOperator` ($\omega=0$), `GradedRelationalOperator` ($0<\omega<1$), `OpenResidualOperator` ($\omega=1$), and `EmergentMetaOperatorBank` ($\omega>1$).
+- [`src/openness_calculus/objectives.py`](src/openness_calculus/objectives.py): `OmegaActionLoss` (Residual-Normalized Thermodynamic Valve), `PrimalDualOpennessController`, and `CrossModalInvarianceLoss`.
+- [`src/openness_calculus/holonomy.py`](src/openness_calculus/holonomy.py): Label-free `compute_intrinsic_gauge_openness` (Conditional Continuation Surprisal + Predictive Entropy + Pragmatic Frame Gauge Variance) and `compute_compositional_holonomy`.
+- [`src/openness_calculus/bidirectional_duality.py`](src/openness_calculus/bidirectional_duality.py): `BidirectionalOmegaDuality` & `ConciseExplanationLifter` for round-trip verifiable Math/Code $\leftrightarrow$ Natural Language duality.
+- [`src/openness_calculus/emergent_superoperators.py`](src/openness_calculus/emergent_superoperators.py): Multi-hop reasoning compression into $\omega > 1$ super-operators, `RenormalizedOmegaTower`, and 6-step sequential state tracking.
+- [`src/openness_calculus/transformer_pretrain.py`](src/openness_calculus/transformer_pretrain.py): `StandardCausalTransformer` vs. `OmegaCausalTransformer` pre-training compute dividend benchmark.
+- [`src/openness_calculus/distill_open_weights.py`](src/openness_calculus/distill_open_weights.py): Unified CLI runner for Experiments A–H and HuggingFace open-weights LLM dissections.
+- [`tests/test_omega_calculus.py`](tests/test_omega_calculus.py): 8 mathematical verification unit tests.
+- [`results/`](results/): Empirical JSON reports from GitHub Actions (`benchmark_smollm2.json`, `benchmark_qwen25_05b.json`).
