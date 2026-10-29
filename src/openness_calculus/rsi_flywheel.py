@@ -72,12 +72,12 @@ def run_experiment_o_compositional_program_synthesis(
         centered_q = (x @ quad_u) * (x @ quad_v) - (quad_u * quad_v).sum(dim=0, keepdim=True)
         return 0.35 * (centered_q @ quad_w)
 
-    # Build individual-rule natural-language training sets (N=68 per rule, never composed)
+    # Build individual-rule natural-language training sets (N=96 per rule, never composed)
     train_x, train_y = [], []
     for r_mat in rules:
-        x = torch.randn(68, dim)
+        x = torch.randn(96, dim)
         y_clean = x @ r_mat
-        y_nl = y_clean + nl_pragmatic_nuance(x) + 0.25 * torch.randn(68, dim)
+        y_nl = y_clean + nl_pragmatic_nuance(x) + 0.25 * torch.randn(96, dim)
         train_x.append(x)
         train_y.append(y_nl)
 
