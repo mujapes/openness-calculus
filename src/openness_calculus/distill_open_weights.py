@@ -534,6 +534,34 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
         mse_total = F.mse_loss(omega_layer(h_all)["output"], d_all_norm).item()
         cosine_sim = F.cosine_similarity(omega_layer(h_all)["output"], d_all_norm, dim=-1).mean().item()
 
+    # 2. Real LLM Cross-Modal Code <-> Prose Alignment & Zero-Shot Probe Transfer
+    from .llm_crystallization import PARALLEL_PROSE_CODE_PAIRS, run_llm_cross_modal_alignment
+
+    hp_list, dp_list, hc_list, dc_list, sym_list = [], [], [], [], []
+    with torch.no_grad():
+        for prose_txt, code_txt, sym_vec in PARALLEL_PROSE_CODE_PAIRS:
+            enc_p = tokenizer(prose_txt, return_tensors="pt", truncation=True, max_length=64)
+            out_p = model(**enc_p, output_hidden_states=True)
+            hsp = out_p.hidden_states
+            hp_list.append(hsp[target_layer][0].mean(dim=0, keepdim=True))
+            dp_list.append((hsp[target_layer + 1][0] - hsp[target_layer][0]).mean(dim=0, keepdim=True))
+
+            enc_c = tokenizer(code_txt, return_tensors="pt", truncation=True, max_length=64)
+            out_c = model(**enc_c, output_hidden_states=True)
+            hsc = out_c.hidden_states
+            hc_list.append(hsc[target_layer][0].mean(dim=0, keepdim=True))
+            dc_list.append((hsc[target_layer + 1][0] - hsc[target_layer][0]).mean(dim=0, keepdim=True))
+            sym_list.append(sym_vec)
+
+    cross_modal_llm = run_llm_cross_modal_alignment(
+        h_prose_seq=torch.cat(hp_list, dim=0),
+        d_prose_seq=torch.cat(dp_list, dim=0),
+        h_code_seq=torch.cat(hc_list, dim=0),
+        d_code_seq=torch.cat(dc_list, dim=0),
+        symbolic_targets=torch.tensor(sym_list, dtype=torch.float32),
+        steps=220,
+    )
+
     return {
         "model_name": model_name,
         "hidden_dim": dim,
@@ -555,6 +583,7 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
             "omega_causal_prose": round(omega_prose, 4),
             "omega_open_poetry_irony": round(omega_poetic, 4),
         },
+        "llm_cross_modal_code_prose_alignment": cross_modal_llm,
         "distillation_normalized_mse": round(mse_total, 5),
         "distillation_cosine_similarity": round(cosine_sim, 4),
         "continuum_hierarchy_verified": bool(omega_code < omega_prose < omega_poetic),
@@ -634,6 +663,7 @@ def main() -> None:
         run_experiment_i_sheaf_cohomology,
         run_experiment_j_concise_code_explanation_synthesis,
     )
+    from .llm_crystallization import run_experiment_k_cross_modal_crystallization
 
     parser = argparse.ArgumentParser(description="Run Openness Calculus (Omega-Algebra) benchmarks.")
     parser.add_argument("--open-weights-model", type=str, default="", help="Optional HuggingFace model ID to dissect")
@@ -651,6 +681,7 @@ def main() -> None:
         "experiment_h_transformer_pretrain": run_experiment_h_transformer_pretrain(),
         "experiment_i_sheaf_cohomology": run_experiment_i_sheaf_cohomology(),
         "experiment_j_concise_code_explanation_synthesis": run_experiment_j_concise_code_explanation_synthesis(),
+        "experiment_k_cross_modal_crystallization": run_experiment_k_cross_modal_crystallization(),
     }
     if args.open_weights_model:
         report["experiment_d_open_weights_llm"] = run_experiment_d_open_weights_llm(args.open_weights_model)

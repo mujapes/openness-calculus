@@ -21,6 +21,9 @@ from openness_calculus.sheaf_logic import (
     run_experiment_i_sheaf_cohomology,
     run_experiment_j_concise_code_explanation_synthesis,
 )
+from openness_calculus.llm_crystallization import (
+    run_experiment_k_cross_modal_crystallization,
+)
 from openness_calculus.omega_layer import OmegaContinuumLayer, default_continuum_specs
 
 
@@ -84,6 +87,11 @@ class TestOmegaContinuum(unittest.TestCase):
         res = run_experiment_j_concise_code_explanation_synthesis(dim=36, program_depth=4, steps=220)
         self.assertTrue(res["concise_program_explanation_verified"], msg=f"Concise code explanation failed: {res}")
         self.assertGreater(res["verifiability_improvement_ratio"], 2.0)
+
+    def test_cross_modal_operator_crystallization(self) -> None:
+        res = run_experiment_k_cross_modal_crystallization(dim=48)
+        self.assertTrue(res["cross_modal_alignment_verified"], msg=f"Cross-modal crystallization failed: {res}")
+        self.assertGreater(res["zero_shot_probe_improvement_ratio"], 2.0)
 
 
 if __name__ == "__main__":
