@@ -1,0 +1,55 @@
+name: Openness Calculus Free Compute Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      open_weights_model:
+        description: "HuggingFace Open-Weights Model ID to dissect"
+        required: false
+        default: "HuggingFaceTB/SmolLM2-135M"
+
+jobs:
+  omega-calculus-experiments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install CPU PyTorch & HuggingFace Transformers
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers safetensors
+          pip install -e .
+
+      - name: Run Mathematical Verification Suite (Unit Tests)
+        run: |
+          python -m unittest discover -s tests -v
+
+      - name: Run Full Open-Weights LLM Dissection & Benchmark Suite (SmolLM2-135M + Qwen2.5-0.5B)
+        run: |
+          MODEL_ID="${{ github.event.inputs.open_weights_model || 'HuggingFaceTB/SmolLM2-135M' }}"
+          python -m openness_calculus.distill_open_weights \
+            --open-weights-model "$MODEL_ID" \
+            --output-json results/benchmark_smollm2.json
+
+          python -m openness_calculus.distill_open_weights \
+            --open-weights-model "Qwen/Qwen2.5-0.5B" \
+            --output-json results/benchmark_qwen25_05b.json
+
+      - name: Upload Empirical Benchmark Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: openness-calculus-benchmarks
+          path: results/*.json

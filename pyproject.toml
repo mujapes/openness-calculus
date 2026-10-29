@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openness-calculus"
+version = "0.1.0"
+description = "Openness Calculus (Omega-Algebra): Continuous Open-Endedness Spectrum for NL-to-Code Spillover and Anti-Cannibalization Distillation"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0.0",
+]
+
+[project.optional-dependencies]
+llm = [
+    "transformers>=4.40.0",
+    "safetensors>=0.4.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
