@@ -145,6 +145,22 @@
     "verbose_explanation_mean_omega": 0.7758,
     "concise_program_explanation_verified": true
   },
+  "experiment_k_cross_modal_crystallization": {
+    "raw_prose_code_cosine_similarity": 0.7423,
+    "omega_closed_core_prose_code_cosine_similarity": 0.9998,
+    "full_transition_reconstruction_cosine": 0.9998,
+    "zero_shot_raw_llm_code_probe_mse": 0.09684,
+    "zero_shot_omega_core_code_probe_mse": 0.0001,
+    "zero_shot_probe_improvement_ratio": 982.48,
+    "cross_modal_alignment_verified": true
+  },
+  "experiment_l_held_out_code_spillover": {
+    "novel_domain_baseline_zero_shot_code_mse": 0.05873,
+    "novel_domain_omega_core_zero_shot_code_mse": 0.00589,
+    "novel_domain_prose_reconstruction_mse": 0.00826,
+    "novel_domain_code_spillover_ratio": 9.98,
+    "unpaired_novel_domain_spillover_verified": true
+  },
   "experiment_d_open_weights_llm": {
     "model_name": "Qwen/Qwen2.5-0.5B",
     "hidden_dim": 896,
@@ -196,10 +212,19 @@
       "omega_causal_prose": 0.4119,
       "omega_open_poetry_irony": 0.5406
     },
+    "llm_cross_modal_code_prose_alignment": {
+      "raw_prose_code_cosine_similarity": 0.5021,
+      "omega_closed_core_prose_code_cosine_similarity": 0.9998,
+      "full_transition_reconstruction_cosine": 0.9999,
+      "zero_shot_raw_llm_code_probe_mse": 0.26731,
+      "zero_shot_omega_core_code_probe_mse": 3e-05,
+      "zero_shot_probe_improvement_ratio": 9264.12,
+      "cross_modal_alignment_verified": true
+    },
     "distillation_normalized_mse": 0.01575,
     "distillation_cosine_similarity": 0.994,
     "continuum_hierarchy_verified": true,
-    "elapsed_sec": 145.28
+    "elapsed_sec": 157.15
   },
-  "total_runtime_sec": 168.35
+  "total_runtime_sec": 184.95
 }

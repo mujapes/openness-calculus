@@ -145,6 +145,22 @@
     "verbose_explanation_mean_omega": 0.7758,
     "concise_program_explanation_verified": true
   },
+  "experiment_k_cross_modal_crystallization": {
+    "raw_prose_code_cosine_similarity": 0.7423,
+    "omega_closed_core_prose_code_cosine_similarity": 0.9998,
+    "full_transition_reconstruction_cosine": 0.9998,
+    "zero_shot_raw_llm_code_probe_mse": 0.09684,
+    "zero_shot_omega_core_code_probe_mse": 0.0001,
+    "zero_shot_probe_improvement_ratio": 982.48,
+    "cross_modal_alignment_verified": true
+  },
+  "experiment_l_held_out_code_spillover": {
+    "novel_domain_baseline_zero_shot_code_mse": 0.05873,
+    "novel_domain_omega_core_zero_shot_code_mse": 0.00589,
+    "novel_domain_prose_reconstruction_mse": 0.00826,
+    "novel_domain_code_spillover_ratio": 9.98,
+    "unpaired_novel_domain_spillover_verified": true
+  },
   "experiment_d_open_weights_llm": {
     "model_name": "HuggingFaceTB/SmolLM2-135M",
     "hidden_dim": 576,
@@ -196,10 +212,19 @@
       "omega_causal_prose": 0.4438,
       "omega_open_poetry_irony": 0.5926
     },
+    "llm_cross_modal_code_prose_alignment": {
+      "raw_prose_code_cosine_similarity": 0.7421,
+      "omega_closed_core_prose_code_cosine_similarity": 0.9999,
+      "full_transition_reconstruction_cosine": 0.9999,
+      "zero_shot_raw_llm_code_probe_mse": 0.29013,
+      "zero_shot_omega_core_code_probe_mse": 9e-05,
+      "zero_shot_probe_improvement_ratio": 3269.01,
+      "cross_modal_alignment_verified": true
+    },
     "distillation_normalized_mse": 0.01692,
     "distillation_cosine_similarity": 0.9592,
     "continuum_hierarchy_verified": true,
-    "elapsed_sec": 60.34
+    "elapsed_sec": 65.9
   },
-  "total_runtime_sec": 83.52
+  "total_runtime_sec": 93.86
 }

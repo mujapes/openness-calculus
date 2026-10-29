@@ -88,9 +88,9 @@ If you compress a model's weights into closed formulas and discard what doesn't 
 
 ## 5. Verified Empirical Results (GitHub Actions Free Compute Suite)
 
-All 8 unit tests and full open-weights LLM dissections run automatically on every push via [`.github/workflows/research-ci.yml`](.github/workflows/research-ci.yml) and are saved in [`results/benchmark_smollm2.json`](results/benchmark_smollm2.json) and [`results/benchmark_qwen25_05b.json`](results/benchmark_qwen25_05b.json).
+All 12 unit tests and full open-weights LLM dissections run automatically on every push via [`.github/workflows/research-ci.yml`](.github/workflows/research-ci.yml) and are saved in [`results/benchmark_smollm2.json`](results/benchmark_smollm2.json) and [`results/benchmark_qwen25_05b.json`](results/benchmark_qwen25_05b.json).
 
-### 5.1 Core Mathematical & Architectural Benchmarks (Experiments A–C, E–J)
+### 5.1 Core Mathematical & Architectural Benchmarks (Experiments A–C, E–L)
 
 | Experiment | Metric / Phenomenon Tested | Empirical Result | Status |
 | :--- | :--- | :--- | :---: |
@@ -103,15 +103,17 @@ All 8 unit tests and full open-weights LLM dissections run automatically on ever
 | **Exp H: Transformer Compute Dividend** | Causal Self-Attention Transformer pre-training speedup on Code | **6.0x** pre-training convergence speedup (`6 steps → 1 step`), **1.94x** zero-shot MSE improvement, **75.94%** closed-core crystallization | ✅ Verified |
 | **Exp I: Graded $\Omega$-Sheaf Cohomology** | Discourse gluing & Tropical Semiring $(\mathbb{R}_{\ge 0}, \min, +)$ laws | $\bar{\omega}_{\text{syllogism}} = \mathbf{0.0051} < \bar{\omega}_{\text{defeasible}} = \mathbf{0.5544} < \bar{\omega}_{\text{paradox}} = \mathbf{0.7470}$ (glued defect `0.0163`) | ✅ Verified |
 | **Exp J: 4-Hop Program $\to$ Concise NL** | Multi-step code explanation synthesis with closed-core verification | **21.6x** lower 4-hop verification error (`0.0146` vs `0.3145`) at **12.1x** lower explanation openness ($\bar{\omega}^* = \mathbf{0.0640}$ vs `0.7758`) | ✅ Verified |
+| **Exp K: Cross-Modal Crystallization** | Aligning English Prose & Python Code clauses into $\omega = 0$ core | Cross-modal cosine `0.7423 → 0.9998`; **982.4x** zero-shot symbolic code probe MSE improvement (`0.0968 → 0.0001`) | ✅ Verified |
+| **Exp L: Unpaired Novel-Domain Spillover** | Novel concept learned *100% in NL Prose* $\to$ zero-shot unseen Code | **9.98x** zero-shot code MSE reduction (`0.0587 → 0.0059`) in a novel domain with *zero* code training examples | ✅ Verified |
 
-### 5.2 Real Open-Weights LLM Dissections (Experiment D)
+### 5.2 Real Open-Weights LLM Dissections & Cross-Modal Code $\leftrightarrow$ Prose Alignment (Experiment D)
 
-Dissecting middle-layer state transitions ($h^{(L)} \to h^{(L+1)}$) across **Formal Python Code**, **Bounded Causal Prose**, and **Open Poetry/Irony** with **zero human labels**:
+Dissecting middle-layer state transitions ($h^{(L)} \to h^{(L+1)}$) across **Formal Python Code**, **Bounded Causal Prose**, and **Open Poetry/Irony** with **zero human labels**, plus aligning parallel `(English Prose, Python Code)` specifications in the $\omega = 0$ closed core:
 
-| Open-Weights Model | Dissected Layer & Dim | Unsupervised Intrinsic Gauge Openness ($\omega_{\text{intrinsic}}$) | Distilled $\Omega$-Continuum Profile ($\bar{\omega}$) | Cosine Sim | Hierarchy Verified |
-| :--- | :--- | :--- | :--- | :---: | :---: |
-| **`HuggingFaceTB/SmolLM2-135M`** | Layer 15 ($d = 576$, 449 tokens) | Code: **`0.2047`** < Prose: **`0.4098`** < Poetry: **`0.6730`** | Code: **`0.4078`** < Prose: **`0.4455`** < Poetry: **`0.5969`** | `0.9584` | ✅ `True` |
-| **`Qwen/Qwen2.5-0.5B`** | Layer 12 ($d = 896$, 435 tokens) | Code: **`0.1394`** < Prose: **`0.3221`** < Poetry: **`0.6240`** | Code: **`0.4085`** < Prose: **`0.4214`** < Poetry: **`0.5561`** | `0.9809` | ✅ `True` |
+| Open-Weights Model | Dissected Layer & Dim | Unsupervised Intrinsic Gauge Openness ($\omega_{\text{intrinsic}}$) | Distilled $\Omega$-Continuum Profile ($\bar{\omega}$) | Real LLM Cross-Modal Code $\leftrightarrow$ Prose Cosine (Raw $\to$ $\Omega$-Core) | Real LLM Zero-Shot NL $\to$ Code Probe Improvement | Status |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: |
+| **`HuggingFaceTB/SmolLM2-135M`** | Layer 15 ($d = 576$, 449 tokens) | Code: **`0.2047`** < Prose: **`0.4098`** < Poetry: **`0.6730`** | Code: **`0.4078`** < Prose: **`0.4455`** < Poetry: **`0.5969`** | `0.7421` $\to$ **`0.9999`** | **3,125.9x** (`0.2901 → 0.00009`) | ✅ `True` |
+| **`Qwen/Qwen2.5-0.5B`** | Layer 12 ($d = 896$, 435 tokens) | Code: **`0.1394`** < Prose: **`0.3221`** < Poetry: **`0.6240`** | Code: **`0.4085`** < Prose: **`0.4214`** < Poetry: **`0.5561`** | `0.5021` $\to$ **`0.9998`** | **9,283.0x** (`0.2673 → 0.00003`) | ✅ `True` |
 
 ---
 
@@ -124,6 +126,7 @@ Dissecting middle-layer state transitions ($h^{(L)} \to h^{(L+1)}$) across **For
 - [`src/openness_calculus/emergent_superoperators.py`](src/openness_calculus/emergent_superoperators.py): Multi-hop reasoning compression into $\omega > 1$ super-operators, `RenormalizedOmegaTower`, and 6-step sequential state tracking.
 - [`src/openness_calculus/transformer_pretrain.py`](src/openness_calculus/transformer_pretrain.py): `StandardCausalTransformer` vs. `OmegaCausalTransformer` pre-training compute dividend benchmark.
 - [`src/openness_calculus/sheaf_logic.py`](src/openness_calculus/sheaf_logic.py): `GradedOmegaSheaf` (Cellular Sheaf Cohomology over the Tropical Openness Semiring) and 4-hop program $\to$ concise verifiable NL explanation synthesis.
-- [`src/openness_calculus/distill_open_weights.py`](src/openness_calculus/distill_open_weights.py): Unified CLI runner for Experiments A–J and HuggingFace open-weights LLM dissections.
-- [`tests/test_omega_calculus.py`](tests/test_omega_calculus.py): 10 mathematical verification unit tests.
+- [`src/openness_calculus/llm_crystallization.py`](src/openness_calculus/llm_crystallization.py): Real LLM cross-modal Code $\leftrightarrow$ Prose $\omega = 0$ crystallization, zero-shot symbolic state probes, and unpaired novel-domain NL $\to$ Code spillover.
+- [`src/openness_calculus/distill_open_weights.py`](src/openness_calculus/distill_open_weights.py): Unified CLI runner for Experiments A–L and HuggingFace open-weights LLM dissections.
+- [`tests/test_omega_calculus.py`](tests/test_omega_calculus.py): 12 mathematical verification unit tests.
 - [`results/`](results/): Empirical JSON reports from GitHub Actions (`benchmark_smollm2.json`, `benchmark_qwen25_05b.json`).
