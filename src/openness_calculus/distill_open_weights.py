@@ -78,54 +78,64 @@ def intrinsic_noncommutativity_curvature(h_seq: torch.Tensor, delta_seq: torch.T
 def run_experiment_a_minimum_openness(dim: int = 48, steps: int = 260) -> dict[str, Any]:
     """Verify that the Primal-Dual Omega-Continuum routes closed logical laws to omega -> 0,
     bounded relational mappings to intermediate omega, and high-rank open nuance to omega -> 1.
+
+    Uses three strictly orthogonal algebraic orders with matched unit target variance:
+      1. closed_logic (1st-order linear skew-orthogonal group generator -> Band 0, omega=0.0)
+      2. bounded_relational (2nd-order rank-5 bilinear interaction, zero linear correlation -> Bands 1-2)
+      3. open_pragmatic (high-order full-rank contextual interaction -> Band 4, omega=1.0)
     """
     set_seed(101)
     from .omega_layer import OmegaBandSpec
 
     specs = [
-        OmegaBandSpec(omega=0.00, rank=4, kind="algebraic", action_cost=0.00),
-        OmegaBandSpec(omega=0.25, rank=6, kind="relational", action_cost=0.12),
+        OmegaBandSpec(omega=0.00, rank=6, kind="algebraic", action_cost=0.00),
+        OmegaBandSpec(omega=0.25, rank=6, kind="relational", action_cost=0.15),
         OmegaBandSpec(omega=0.50, rank=8, kind="homomorphic", action_cost=0.35),
-        OmegaBandSpec(omega=0.75, rank=12, kind="homomorphic", action_cost=0.65),
+        OmegaBandSpec(omega=0.75, rank=10, kind="homomorphic", action_cost=0.65),
         OmegaBandSpec(omega=1.00, rank=dim, kind="open_residual", action_cost=1.00),
     ]
 
-    # Utterance prototype bank (64 canonical linguistic contexts in R^dim)
-    prototypes = torch.randn(64, dim)
-
-    # 1. Closed logic law: pure rank-4 skew-symmetric linear state update (exact match for Band 0)
-    u_true = torch.randn(dim, 2) / math.sqrt(dim)
-    v_true = torch.randn(dim, 2) / math.sqrt(dim)
+    # 1. 1st-order closed logic law (exact match for Band 0)
+    u_true = torch.randn(dim, 3) / math.sqrt(dim)
+    v_true = torch.randn(dim, 3) / math.sqrt(dim)
     skew_true = (u_true @ v_true.t()) - (v_true @ u_true.t())
 
-    # 2. Bounded relational law: rank-5 nonlinear tanh state constraint (captured by Bands 1-2)
-    rel_down = torch.randn(dim, 5) / math.sqrt(dim)
-    rel_up = torch.randn(5, dim) / math.sqrt(5)
+    # 2. 2nd-order rank-4 bilinear relational law (orthogonal to 1st-order linear Band 0)
+    rel_u = torch.randn(dim, 4) / math.sqrt(dim)
+    rel_v = torch.randn(dim, 4) / math.sqrt(dim)
+    rel_up = torch.randn(4, dim) / math.sqrt(4)
 
-    # 3. Open pragmatic nuance: full-rank (rank-40) contextual lookup/nonlinear mapping (requires Band 4)
-    open_down = torch.randn(dim, 40) / math.sqrt(dim)
-    open_up = torch.randn(40, dim) / math.sqrt(40)
+    # 3. High-order full-rank pragmatic lookup over 32 canonical idiom prototypes
+    idiom_keys = F.normalize(torch.randn(32, dim), dim=-1)
+    idiom_vals = torch.randn(32, dim)
 
     def sample_regime_batch(batch_size: int, regime: str) -> tuple[torch.Tensor, torch.Tensor]:
-        idx = torch.randint(0, prototypes.shape[0], (batch_size,))
-        x = prototypes[idx] + 0.08 * torch.randn(batch_size, dim)
+        z = torch.randn(batch_size, dim)
         if regime == "closed_logic":
-            x[:, :3] = torch.tensor([2.5, -1.0, -1.0])
-            y = x @ skew_true
-            return x, y
-        rel = torch.tanh(x @ rel_down) @ rel_up
+            # Tag in last 3 coords with small norm so linear core isn't skewed by giant constant bias
+            z[:, -3:] = torch.tensor([1.0, 0.0, 0.0])
+            y = z @ skew_true
+            y = y / y.std().clamp_min(1e-6)
+            return z, y
         if regime == "bounded_relational":
-            x[:, :3] = torch.tensor([-1.0, 2.5, -1.0])
-            y = 0.35 * (x @ skew_true) + 1.40 * rel
-            return x, y
-        x[:, :3] = torch.tensor([-1.0, -1.0, 2.5])
-        open_part = F.silu(x @ open_down) @ open_up
-        y = 0.15 * (x @ skew_true) + 0.25 * rel + 2.40 * open_part
+            z[:, -3:] = torch.tensor([0.0, 1.0, 0.0])
+            # Zero-mean 2nd-order bilinear interaction: E[z^T y] = 0 -> Band 0 (linear) cannot fit!
+            z_core = z[:, :-3]
+            y = ((z_core @ rel_u[:-3]) * torch.tanh(z_core @ rel_v[:-3])) @ rel_up
+            y = y / y.std().clamp_min(1e-6)
+            return z, y
+        # open_pragmatic: sharp radial-basis / softmax lookup over 32 full-rank idiom prototypes
+        idx = torch.randint(0, 32, (batch_size,))
+        x = idiom_keys[idx] * math.sqrt(dim) + 0.05 * z
+        x[:, -3:] = torch.tensor([0.0, 0.0, 1.0])
+        weights = F.softmax((x @ idiom_keys.t()) * 4.0, dim=-1)
+        y = weights @ idiom_vals
+        y = y / y.std().clamp_min(1e-6)
         return x, y
 
     layer = OmegaContinuumLayer(dim=dim, specs=specs, enable_emergent_above_one=False)
-    loss_fn = OmegaActionLoss(peeling_weight=0.65, valve_eps=0.015)
-    ctrl = PrimalDualOpennessController(epsilon_tol=0.015, beta_init=0.18)
+    loss_fn = OmegaActionLoss(peeling_weight=0.70, valve_eps=0.01)
+    ctrl = PrimalDualOpennessController(epsilon_tol=0.02, beta_init=0.25)
     opt = torch.optim.AdamW(layer.parameters(), lr=4.5e-3, weight_decay=1e-4)
 
     batch = 96
@@ -139,7 +149,7 @@ def run_experiment_a_minimum_openness(dim: int = 48, steps: int = 260) -> dict[s
 
         out = layer(x_cat)
         ld = loss_fn(out, y_cat, layer.action_costs)
-        loss = ctrl.compute_loss(ld, peeling_weight=0.65)
+        loss = ctrl.compute_loss(ld, peeling_weight=0.70)
 
         opt.zero_grad()
         loss.backward()

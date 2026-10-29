@@ -85,11 +85,11 @@ class ClosedAlgebraicOperator(nn.Module):
 
 
 class GradedRelationalOperator(nn.Module):
-    """0 < omega < 1 band: Bounded-rank nonlinear relational / homomorphic operator.
+    """0 < omega < 1 band: Bounded-rank bilinear/relational operator.
 
-    Crucial mathematical property: No LayerNorm!
-    Why: LayerNorm rescales near-zero residual noise back to unit norm, artificially
-    inflating high-omega energy even when omega=0 explained 100% of the transition.
+    Captures 2nd-order pairwise relational interactions (x U) * (x V) W of bounded
+    rank r(omega), which are mathematically orthogonal to 1st-order linear (omega=0)
+    operators under zero-mean inputs.
     """
 
     def __init__(self, dim: int, rank: int, homomorphic: bool = False) -> None:
@@ -97,35 +97,42 @@ class GradedRelationalOperator(nn.Module):
         self.dim = dim
         self.rank = min(dim, max(4, rank))
         self.homomorphic = homomorphic
-        self.down = nn.Linear(dim, self.rank, bias=False)
+        self.u_proj = nn.Linear(dim, self.rank, bias=False)
+        self.v_proj = nn.Linear(dim, self.rank, bias=False)
         if homomorphic:
             self.modulator = nn.Linear(dim, self.rank, bias=False)
         self.up = nn.Linear(self.rank, dim, bias=False)
-        nn.init.normal_(self.up.weight, std=0.02 / math.sqrt(self.rank))
+        nn.init.normal_(self.up.weight, std=0.05 / math.sqrt(self.rank))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        h = torch.tanh(self.down(x))
+        # 2nd-order bilinear interaction + smooth bounded activation
+        bilinear = self.u_proj(x) * torch.tanh(self.v_proj(x))
         if self.homomorphic:
-            h = h * F.gelu(self.modulator(x))
-        return self.up(h)
+            bilinear = bilinear * torch.cos(self.modulator(x))
+        return self.up(bilinear)
 
 
 class OpenResidualOperator(nn.Module):
-    """omega = 1.0 band: Full-rank open-ended residual operator.
+    """omega = 1.0 band: Full-rank high-order open pragmatic residual operator.
 
-    Captures irreducible surface idiom, pragmatics, and high-entropy human nuance
-    that cannot be compressed into closed math without losing expressiveness.
+    Captures irreducible multi-way contextual interactions, idioms, and high-entropy
+    human nuance that cannot be compressed into linear (omega=0) or low-rank
+    bilinear (0 < omega < 1) formulas.
     """
 
     def __init__(self, dim: int) -> None:
         super().__init__()
-        self.fc1 = nn.Linear(dim, dim * 2)
-        self.fc2 = nn.Linear(dim * 2, dim)
-        nn.init.normal_(self.fc2.weight, std=0.01 / math.sqrt(dim))
+        hidden = dim * 3
+        self.fc1_a = nn.Linear(dim, hidden)
+        self.fc1_b = nn.Linear(dim, hidden)
+        self.fc2 = nn.Linear(hidden, dim)
+        nn.init.normal_(self.fc2.weight, std=0.02 / math.sqrt(hidden))
         nn.init.zeros_(self.fc2.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.fc2(F.silu(self.fc1(x)))
+        # High-order gated cubic/SwiGLU interaction across full dimensionality
+        h = F.silu(self.fc1_a(x)) * torch.sin(self.fc1_b(x))
+        return self.fc2(h)
 
 
 class EmergentMetaOperatorBank(nn.Module):
@@ -182,8 +189,7 @@ class OmegaContinuumLayer(nn.Module):
         self.enable_emergent_above_one = enable_emergent_above_one
 
         bands: list[nn.Module] = []
-        residual_adapters: list[nn.Module] = []
-        for idx, s in enumerate(self.specs):
+        for s in self.specs:
             if s.kind == "algebraic":
                 bands.append(ClosedAlgebraicOperator(dim, s.rank))
             elif s.kind == "relational":
@@ -195,23 +201,13 @@ class OmegaContinuumLayer(nn.Module):
             else:
                 raise ValueError(f"Unknown band kind: {s.kind}")
 
-            if idx == 0:
-                residual_adapters.append(nn.Identity())
-            else:
-                # Projects cumulative lower-band output back into input conditioning space
-                adapter = nn.Linear(dim, dim, bias=False)
-                nn.init.eye_(adapter.weight)
-                adapter.weight.data.mul_(0.25)
-                residual_adapters.append(adapter)
-
         self.bands = nn.ModuleList(bands)
-        self.residual_adapters = nn.ModuleList(residual_adapters)
 
         # Input-dependent spectral gate alpha(omega, h) in (0, 1)
         self.spectral_gate = nn.Sequential(
-            nn.Linear(dim, max(8, dim // 2)),
-            nn.Tanh(),
-            nn.Linear(max(8, dim // 2), len(self.specs)),
+            nn.Linear(dim, max(12, dim // 2)),
+            nn.SiLU(),
+            nn.Linear(max(12, dim // 2), len(self.specs)),
         )
         with torch.no_grad():
             # Favor closed omega=0 at initialization so low-omega gets first crack
@@ -238,23 +234,18 @@ class OmegaContinuumLayer(nn.Module):
         max_omega: float | None = None,
     ) -> dict[str, torch.Tensor]:
         gates = torch.sigmoid(self.spectral_gate(h))  # (..., K)
-        cumulative_out = torch.zeros_like(h)
         band_outputs: list[torch.Tensor] = []
 
-        for idx, (spec, band, adapter) in enumerate(
-            zip(self.specs, self.bands, self.residual_adapters)
-        ):
+        for idx, (spec, band) in enumerate(zip(self.specs, self.bands)):
             if max_omega is not None and spec.omega > max_omega:
                 y_k = torch.zeros_like(h)
             else:
                 g_k = gates[..., idx : idx + 1]
-                band_in = h if idx == 0 else (h - adapter(cumulative_out.detach()))
-                y_k = g_k * band(band_in)
-                cumulative_out = cumulative_out + y_k
+                y_k = g_k * band(h)
             band_outputs.append(y_k)
 
         stacked = torch.stack(band_outputs, dim=-2)  # (..., K, D)
-        total = cumulative_out
+        total = stacked.sum(dim=-2)
 
         emergent_out = torch.zeros_like(h)
         if self.emergent_bank is not None and (max_omega is None or max_omega > 1.0):
