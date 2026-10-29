@@ -17,6 +17,10 @@ from openness_calculus.emergent_superoperators import (
 from openness_calculus.transformer_pretrain import (
     run_experiment_h_transformer_pretrain,
 )
+from openness_calculus.sheaf_logic import (
+    run_experiment_i_sheaf_cohomology,
+    run_experiment_j_concise_code_explanation_synthesis,
+)
 from openness_calculus.omega_layer import OmegaContinuumLayer, default_continuum_specs
 
 
@@ -70,6 +74,16 @@ class TestOmegaContinuum(unittest.TestCase):
         res = run_experiment_h_transformer_pretrain(dim=32, seq_len=6, steps=220)
         self.assertTrue(res["compute_dividend_verified"], msg=f"Compute dividend failed: {res}")
         self.assertGreater(res["zero_shot_code_mse_improvement_ratio"], 1.5)
+
+    def test_graded_sheaf_cohomology_and_tropical_laws(self) -> None:
+        res = run_experiment_i_sheaf_cohomology(dim=40, steps=240)
+        self.assertTrue(res["sheaf_cohomology_hierarchy_verified"], msg=f"Sheaf hierarchy failed: {res}")
+        self.assertTrue(res["tropical_semiring_laws_verified"], msg=f"Tropical semiring laws failed: {res}")
+
+    def test_concise_code_explanation_synthesis(self) -> None:
+        res = run_experiment_j_concise_code_explanation_synthesis(dim=32, program_depth=4, steps=200)
+        self.assertTrue(res["concise_program_explanation_verified"], msg=f"Concise code explanation failed: {res}")
+        self.assertGreater(res["verifiability_improvement_ratio"], 2.0)
 
 
 if __name__ == "__main__":

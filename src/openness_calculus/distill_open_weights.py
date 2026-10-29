@@ -630,6 +630,10 @@ def main() -> None:
         run_experiment_g_sequence_state_tracking,
     )
     from .transformer_pretrain import run_experiment_h_transformer_pretrain
+    from .sheaf_logic import (
+        run_experiment_i_sheaf_cohomology,
+        run_experiment_j_concise_code_explanation_synthesis,
+    )
 
     parser = argparse.ArgumentParser(description="Run Openness Calculus (Omega-Algebra) benchmarks.")
     parser.add_argument("--open-weights-model", type=str, default="", help="Optional HuggingFace model ID to dissect")
@@ -645,6 +649,8 @@ def main() -> None:
         "experiment_f_emergent_superoperators": run_experiment_f_emergent_superoperators(),
         "experiment_g_sequence_state_tracking": run_experiment_g_sequence_state_tracking(),
         "experiment_h_transformer_pretrain": run_experiment_h_transformer_pretrain(),
+        "experiment_i_sheaf_cohomology": run_experiment_i_sheaf_cohomology(),
+        "experiment_j_concise_code_explanation_synthesis": run_experiment_j_concise_code_explanation_synthesis(),
     }
     if args.open_weights_model:
         report["experiment_d_open_weights_llm"] = run_experiment_d_open_weights_llm(args.open_weights_model)
