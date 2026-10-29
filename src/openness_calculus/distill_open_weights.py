@@ -451,6 +451,32 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
     h_prose, d_prose = collect_transitions(causal_prose_samples)
     h_poetic, d_poetic = collect_transitions(open_poetic_samples)
 
+    from .holonomy import compute_compositional_holonomy
+
+    def evaluate_corpus_holonomy(texts: list[str]) -> dict[str, float]:
+        da_list, db_list, dab_list = [], [], []
+        with torch.no_grad():
+            for txt in texts:
+                words = txt.split()
+                mid = max(2, len(words) // 2)
+                part_a = " ".join(words[:mid])
+                part_b = " ".join(words[mid:])
+                for part, bucket in [(part_a, da_list), (part_b, db_list), (txt, dab_list)]:
+                    enc = tokenizer(part, return_tensors="pt", truncation=True, max_length=64)
+                    out = model(**enc, output_hidden_states=True)
+                    hs = out.hidden_states
+                    delta_vec = (hs[target_layer + 1][0] - hs[target_layer][0]).mean(dim=0, keepdim=True)
+                    bucket.append(delta_vec)
+        return compute_compositional_holonomy(
+            torch.cat(da_list, dim=0),
+            torch.cat(db_list, dim=0),
+            torch.cat(dab_list, dim=0),
+        )
+
+    holonomy_code = evaluate_corpus_holonomy(code_samples)
+    holonomy_prose = evaluate_corpus_holonomy(causal_prose_samples)
+    holonomy_poetic = evaluate_corpus_holonomy(open_poetic_samples)
+
     # 1. Measure 100% unsupervised intrinsic curvature directly from the teacher's hidden states
     curv_code = intrinsic_noncommutativity_curvature(h_code, d_code)
     curv_prose = intrinsic_noncommutativity_curvature(h_prose, d_prose)
@@ -513,6 +539,11 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
             "formal_code": round(curv_code, 4),
             "causal_prose": round(curv_prose, 4),
             "open_poetry_irony": round(curv_poetic, 4),
+        },
+        "compositional_holonomy": {
+            "formal_code": holonomy_code,
+            "causal_prose": holonomy_prose,
+            "open_poetry_irony": holonomy_poetic,
         },
         "distilled_omega_profile": {
             "omega_formal_code": round(omega_code, 4),
@@ -589,6 +620,11 @@ def run_experiment_e_bidirectional_duality(dim: int = 36, steps: int = 200) -> d
 
 
 def main() -> None:
+    from .emergent_superoperators import (
+        run_experiment_f_emergent_superoperators,
+        run_experiment_g_sequence_state_tracking,
+    )
+
     parser = argparse.ArgumentParser(description="Run Openness Calculus (Omega-Algebra) benchmarks.")
     parser.add_argument("--open-weights-model", type=str, default="", help="Optional HuggingFace model ID to dissect")
     parser.add_argument("--output-json", type=str, default="results/benchmark_report.json")
@@ -600,6 +636,8 @@ def main() -> None:
         "experiment_b_anti_cannibalization": run_experiment_b_anti_cannibalization(),
         "experiment_c_code_spillover": run_experiment_c_code_spillover(),
         "experiment_e_bidirectional_duality": run_experiment_e_bidirectional_duality(),
+        "experiment_f_emergent_superoperators": run_experiment_f_emergent_superoperators(),
+        "experiment_g_sequence_state_tracking": run_experiment_g_sequence_state_tracking(),
     }
     if args.open_weights_model:
         report["experiment_d_open_weights_llm"] = run_experiment_d_open_weights_llm(args.open_weights_model)

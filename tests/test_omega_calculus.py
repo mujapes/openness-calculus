@@ -10,6 +10,10 @@ from openness_calculus.distill_open_weights import (
     run_experiment_c_code_spillover,
     run_experiment_e_bidirectional_duality,
 )
+from openness_calculus.emergent_superoperators import (
+    run_experiment_f_emergent_superoperators,
+    run_experiment_g_sequence_state_tracking,
+)
 from openness_calculus.omega_layer import OmegaContinuumLayer, default_continuum_specs
 
 
@@ -26,10 +30,8 @@ class TestOmegaContinuum(unittest.TestCase):
         self.assertEqual(out["band_fractions"].shape, (10, 8, 6))
         self.assertEqual(out["mean_openness"].shape, (10, 8))
 
-        # Fractions across [0, 1] bands must sum to 1.0
         frac_sum = out["band_fractions"].sum(dim=-1)
         self.assertTrue(torch.allclose(frac_sum, torch.ones_like(frac_sum), atol=1e-5))
-        # Mean openness must lie strictly within [0, 1]
         self.assertTrue((out["mean_openness"] >= 0.0).all())
         self.assertTrue((out["mean_openness"] <= 1.0).all())
 
@@ -50,6 +52,16 @@ class TestOmegaContinuum(unittest.TestCase):
     def test_bidirectional_omega_duality(self) -> None:
         res = run_experiment_e_bidirectional_duality(dim=36, steps=200)
         self.assertTrue(res["bidirectional_duality_verified"], msg=f"Duality check failed: {res}")
+
+    def test_emergent_superoperators_tower(self) -> None:
+        res = run_experiment_f_emergent_superoperators(dim=40, steps=240)
+        self.assertTrue(res["emergent_tower_verified"], msg=f"Emergent tower failed: {res}")
+        self.assertGreater(res["four_hop_to_one_step_cosine"], 0.92)
+
+    def test_sequence_state_tracking_spillover(self) -> None:
+        res = run_experiment_g_sequence_state_tracking(dim=32, seq_len=6)
+        self.assertTrue(res["sequence_spillover_verified"], msg=f"Sequence spillover failed: {res}")
+        self.assertGreater(res["cumulative_drift_reduction_factor"], 2.0)
 
 
 if __name__ == "__main__":
