@@ -76,12 +76,12 @@ class TestOmegaContinuum(unittest.TestCase):
         self.assertGreater(res["zero_shot_code_mse_improvement_ratio"], 1.5)
 
     def test_graded_sheaf_cohomology_and_tropical_laws(self) -> None:
-        res = run_experiment_i_sheaf_cohomology(dim=40, steps=240)
+        res = run_experiment_i_sheaf_cohomology(dim=48, steps=260)
         self.assertTrue(res["sheaf_cohomology_hierarchy_verified"], msg=f"Sheaf hierarchy failed: {res}")
         self.assertTrue(res["tropical_semiring_laws_verified"], msg=f"Tropical semiring laws failed: {res}")
 
     def test_concise_code_explanation_synthesis(self) -> None:
-        res = run_experiment_j_concise_code_explanation_synthesis(dim=32, program_depth=4, steps=200)
+        res = run_experiment_j_concise_code_explanation_synthesis(dim=36, program_depth=4, steps=220)
         self.assertTrue(res["concise_program_explanation_verified"], msg=f"Concise code explanation failed: {res}")
         self.assertGreater(res["verifiability_improvement_ratio"], 2.0)
 
