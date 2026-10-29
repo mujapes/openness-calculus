@@ -90,7 +90,7 @@ If you compress a model's weights into closed formulas and discard what doesn't 
 
 All 8 unit tests and full open-weights LLM dissections run automatically on every push via [`.github/workflows/research-ci.yml`](.github/workflows/research-ci.yml) and are saved in [`results/benchmark_smollm2.json`](results/benchmark_smollm2.json) and [`results/benchmark_qwen25_05b.json`](results/benchmark_qwen25_05b.json).
 
-### 5.1 Core Mathematical & Architectural Benchmarks (Experiments A–C, E–H)
+### 5.1 Core Mathematical & Architectural Benchmarks (Experiments A–C, E–J)
 
 | Experiment | Metric / Phenomenon Tested | Empirical Result | Status |
 | :--- | :--- | :--- | :---: |
@@ -101,6 +101,8 @@ All 8 unit tests and full open-weights LLM dissections run automatically on ever
 | **Exp F: Emergent $\omega > 1$ Tower** | 4-hop reasoning compression & Level-2 renormalization | **4.0x** depth compression (`cos = 0.9252`) $\to$ Level-2 closed core $\bar{\omega}^{(2)} = \mathbf{0.0141}$ (`cos = 0.9801`) | ✅ Verified |
 | **Exp G: 6-Step Sequence Tracking** | Multi-step autoregressive state tracking spillover (NL $\to$ Code) | **2.68x** reduction in 6-step cumulative rollout drift (`0.3501 → 0.1306`) | ✅ Verified |
 | **Exp H: Transformer Compute Dividend** | Causal Self-Attention Transformer pre-training speedup on Code | **6.0x** pre-training convergence speedup (`6 steps → 1 step`), **1.94x** zero-shot MSE improvement, **75.94%** closed-core crystallization | ✅ Verified |
+| **Exp I: Graded $\Omega$-Sheaf Cohomology** | Discourse gluing & Tropical Semiring $(\mathbb{R}_{\ge 0}, \min, +)$ laws | $\bar{\omega}_{\text{syllogism}} = \mathbf{0.0051} < \bar{\omega}_{\text{defeasible}} = \mathbf{0.5544} < \bar{\omega}_{\text{paradox}} = \mathbf{0.7470}$ (glued defect `0.0163`) | ✅ Verified |
+| **Exp J: 4-Hop Program $\to$ Concise NL** | Multi-step code explanation synthesis with closed-core verification | **21.6x** lower 4-hop verification error (`0.0146` vs `0.3145`) at **12.1x** lower explanation openness ($\bar{\omega}^* = \mathbf{0.0640}$ vs `0.7758`) | ✅ Verified |
 
 ### 5.2 Real Open-Weights LLM Dissections (Experiment D)
 
@@ -121,6 +123,7 @@ Dissecting middle-layer state transitions ($h^{(L)} \to h^{(L+1)}$) across **For
 - [`src/openness_calculus/bidirectional_duality.py`](src/openness_calculus/bidirectional_duality.py): `BidirectionalOmegaDuality` & `ConciseExplanationLifter` for round-trip verifiable Math/Code $\leftrightarrow$ Natural Language duality.
 - [`src/openness_calculus/emergent_superoperators.py`](src/openness_calculus/emergent_superoperators.py): Multi-hop reasoning compression into $\omega > 1$ super-operators, `RenormalizedOmegaTower`, and 6-step sequential state tracking.
 - [`src/openness_calculus/transformer_pretrain.py`](src/openness_calculus/transformer_pretrain.py): `StandardCausalTransformer` vs. `OmegaCausalTransformer` pre-training compute dividend benchmark.
-- [`src/openness_calculus/distill_open_weights.py`](src/openness_calculus/distill_open_weights.py): Unified CLI runner for Experiments A–H and HuggingFace open-weights LLM dissections.
-- [`tests/test_omega_calculus.py`](tests/test_omega_calculus.py): 8 mathematical verification unit tests.
+- [`src/openness_calculus/sheaf_logic.py`](src/openness_calculus/sheaf_logic.py): `GradedOmegaSheaf` (Cellular Sheaf Cohomology over the Tropical Openness Semiring) and 4-hop program $\to$ concise verifiable NL explanation synthesis.
+- [`src/openness_calculus/distill_open_weights.py`](src/openness_calculus/distill_open_weights.py): Unified CLI runner for Experiments A–J and HuggingFace open-weights LLM dissections.
+- [`tests/test_omega_calculus.py`](tests/test_omega_calculus.py): 10 mathematical verification unit tests.
 - [`results/`](results/): Empirical JSON reports from GitHub Actions (`benchmark_smollm2.json`, `benchmark_qwen25_05b.json`).
