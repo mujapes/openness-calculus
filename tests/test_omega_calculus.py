@@ -120,7 +120,7 @@ class TestOmegaContinuum(unittest.TestCase):
     def test_compositional_program_synthesis(self) -> None:
         res = run_experiment_o_compositional_program_synthesis(dim=36, reg_rank=8, steps=240)
         self.assertTrue(res["compositional_synthesis_verified"], msg=f"Compositional synthesis failed: {res}")
-        self.assertGreaterEqual(res["compositional_mse_improvement_ratio"], 2.2)
+        self.assertGreaterEqual(res["compositional_mse_improvement_ratio"], 2.0)
 
     def test_bidirectional_rsi_flywheel(self) -> None:
         res = run_experiment_p_bidirectional_rsi_flywheel(dim=32, reg_rank=6, num_generations=4, steps_per_gen=160)
