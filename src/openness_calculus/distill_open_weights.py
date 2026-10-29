@@ -563,12 +563,18 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
     )
 
     from .reverse_explanation import evaluate_llm_reverse_explanation_ranking
+    from .vibe_telephone import run_llm_telephone_game
 
     reverse_explain_llm = evaluate_llm_reverse_explanation_ranking(
         model=model,
         tokenizer=tokenizer,
         target_layer=target_layer,
         steps=180,
+    )
+    telephone_llm = run_llm_telephone_game(
+        model=model,
+        tokenizer=tokenizer,
+        device="cpu",
     )
 
     return {
@@ -584,7 +590,7 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
         },
         "compositional_holonomy": {
             "formal_code": holonomy_code,
-            "causal_prose": holonomy_prose,
+            "causal_prose": causal_prose if False else holonomy_prose,
             "open_poetry_irony": holonomy_poetic,
         },
         "distilled_omega_profile": {
@@ -594,6 +600,7 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
         },
         "llm_cross_modal_code_prose_alignment": cross_modal_llm,
         "llm_reverse_explanation_ranking": reverse_explain_llm,
+        "llm_vibe_telephone_game": telephone_llm,
         "distillation_normalized_mse": round(mse_total, 5),
         "distillation_cosine_similarity": round(cosine_sim, 4),
         "continuum_hierarchy_verified": bool(omega_code < omega_prose < omega_poetic),
@@ -685,6 +692,7 @@ def main() -> None:
         run_experiment_o_compositional_program_synthesis,
         run_experiment_p_bidirectional_rsi_flywheel,
     )
+    from .vibe_telephone import run_experiment_q_automated_telephone_game
 
     parser = argparse.ArgumentParser(description="Run Openness Calculus (Omega-Algebra) benchmarks.")
     parser.add_argument("--open-weights-model", type=str, default="", help="Optional HuggingFace model ID to dissect")
@@ -708,6 +716,7 @@ def main() -> None:
         "experiment_n_mdl_law_discovery": run_experiment_n_mdl_law_discovery(),
         "experiment_o_compositional_program_synthesis": run_experiment_o_compositional_program_synthesis(),
         "experiment_p_bidirectional_rsi_flywheel": run_experiment_p_bidirectional_rsi_flywheel(),
+        "experiment_q_automated_telephone_game": run_experiment_q_automated_telephone_game(),
     }
     if args.open_weights_model:
         report["experiment_d_open_weights_llm"] = run_experiment_d_open_weights_llm(args.open_weights_model)

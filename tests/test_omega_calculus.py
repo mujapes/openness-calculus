@@ -33,6 +33,9 @@ from openness_calculus.rsi_flywheel import (
     run_experiment_o_compositional_program_synthesis,
     run_experiment_p_bidirectional_rsi_flywheel,
 )
+from openness_calculus.vibe_telephone import (
+    run_experiment_q_automated_telephone_game,
+)
 from openness_calculus.omega_layer import OmegaContinuumLayer, default_continuum_specs
 
 
@@ -126,6 +129,12 @@ class TestOmegaContinuum(unittest.TestCase):
         res = run_experiment_p_bidirectional_rsi_flywheel(dim=32, reg_rank=6, num_generations=4, steps_per_gen=160)
         self.assertTrue(res["bidirectional_rsi_flywheel_verified"], msg=f"Bidirectional RSI flywheel failed: {res}")
         self.assertGreaterEqual(res["final_gen_omega_verified_cosine"], 0.94)
+
+    def test_automated_telephone_game(self) -> None:
+        res = run_experiment_q_automated_telephone_game()
+        self.assertTrue(res["telephone_game_verified"], msg=f"Telephone game failed: {res}")
+        self.assertTrue(res["all_winners_reconstruct_exact_code"])
+        self.assertLess(res["mean_best_w"], 0.06)
 
 
 if __name__ == "__main__":
