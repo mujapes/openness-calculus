@@ -67,9 +67,9 @@ class TestOmegaContinuum(unittest.TestCase):
         self.assertGreater(res["cumulative_drift_reduction_factor"], 2.0)
 
     def test_transformer_pretrain_compute_dividend(self) -> None:
-        res = run_experiment_h_transformer_pretrain(dim=32, seq_len=6, steps=160)
+        res = run_experiment_h_transformer_pretrain(dim=32, seq_len=6, steps=220)
         self.assertTrue(res["compute_dividend_verified"], msg=f"Compute dividend failed: {res}")
-        self.assertGreater(res["zero_shot_code_mse_improvement_ratio"], 1.3)
+        self.assertGreater(res["zero_shot_code_mse_improvement_ratio"], 1.5)
 
 
 if __name__ == "__main__":
