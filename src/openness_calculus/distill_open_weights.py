@@ -451,7 +451,7 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
     h_prose, d_prose = collect_transitions(causal_prose_samples)
     h_poetic, d_poetic = collect_transitions(open_poetic_samples)
 
-    from .holonomy import compute_compositional_holonomy
+    from .holonomy import compute_compositional_holonomy, compute_intrinsic_gauge_openness
 
     def evaluate_corpus_holonomy(texts: list[str]) -> dict[str, float]:
         da_list, db_list, dab_list = [], [], []
@@ -477,10 +477,14 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
     holonomy_prose = evaluate_corpus_holonomy(causal_prose_samples)
     holonomy_poetic = evaluate_corpus_holonomy(open_poetic_samples)
 
-    # 1. Measure 100% unsupervised intrinsic curvature directly from the teacher's hidden states
-    curv_code = intrinsic_noncommutativity_curvature(h_code, d_code)
-    curv_prose = intrinsic_noncommutativity_curvature(h_prose, d_prose)
-    curv_poetic = intrinsic_noncommutativity_curvature(h_poetic, d_poetic)
+    # 1. Measure 100% label-free intrinsic gauge openness (continuation surprisal + entropy + gauge drift)
+    gauge_code = compute_intrinsic_gauge_openness(model, tokenizer, code_samples, target_layer)
+    gauge_prose = compute_intrinsic_gauge_openness(model, tokenizer, causal_prose_samples, target_layer)
+    gauge_poetic = compute_intrinsic_gauge_openness(model, tokenizer, open_poetic_samples, target_layer)
+
+    curv_code = gauge_code["intrinsic_omega"]
+    curv_prose = gauge_prose["intrinsic_omega"]
+    curv_poetic = gauge_poetic["intrinsic_omega"]
 
     dim = h_code.shape[-1]
     set_seed(404)
@@ -505,11 +509,11 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
         out_poet_sub = omega_layer(h_poetic)
         inv_loss = invariance_fn(out_p_sub, out_c_sub)
 
-        # Guide spectral gate with intrinsic unsupervised curvature targets so no human labels are needed
+        # Guide spectral gate directly with the 100% unsupervised intrinsic gauge openness
         gate_curv_loss = (
-            F.mse_loss(out_c_sub["mean_openness"].mean(), torch.tensor(curv_code * 0.5))
-            + F.mse_loss(out_p_sub["mean_openness"].mean(), torch.tensor(curv_prose * 0.75))
-            + F.mse_loss(out_poet_sub["mean_openness"].mean(), torch.tensor(min(0.95, curv_poetic * 1.1)))
+            F.mse_loss(out_c_sub["mean_openness"].mean(), torch.tensor(curv_code))
+            + F.mse_loss(out_p_sub["mean_openness"].mean(), torch.tensor(curv_prose))
+            + F.mse_loss(out_poet_sub["mean_openness"].mean(), torch.tensor(curv_poetic))
         )
 
         loss = ctrl.compute_loss(ld, peeling_weight=0.45) + 0.08 * inv_loss + 0.25 * gate_curv_loss
@@ -535,10 +539,11 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
         "hidden_dim": dim,
         "dissected_layer": target_layer,
         "tokens_analyzed": int(h_all.shape[0]),
-        "intrinsic_unsupervised_curvature": {
-            "formal_code": round(curv_code, 4),
-            "causal_prose": round(curv_prose, 4),
-            "open_poetry_irony": round(curv_poetic, 4),
+        "intrinsic_unsupervised_gauge_openness": {
+            "formal_code": gauge_code,
+            "causal_prose": gauge_prose,
+            "open_poetry_irony": gauge_poetic,
+            "monotonic_intrinsic_ordering": bool(curv_code < curv_prose < curv_poetic),
         },
         "compositional_holonomy": {
             "formal_code": holonomy_code,
@@ -624,6 +629,7 @@ def main() -> None:
         run_experiment_f_emergent_superoperators,
         run_experiment_g_sequence_state_tracking,
     )
+    from .transformer_pretrain import run_experiment_h_transformer_pretrain
 
     parser = argparse.ArgumentParser(description="Run Openness Calculus (Omega-Algebra) benchmarks.")
     parser.add_argument("--open-weights-model", type=str, default="", help="Optional HuggingFace model ID to dissect")
@@ -638,6 +644,7 @@ def main() -> None:
         "experiment_e_bidirectional_duality": run_experiment_e_bidirectional_duality(),
         "experiment_f_emergent_superoperators": run_experiment_f_emergent_superoperators(),
         "experiment_g_sequence_state_tracking": run_experiment_g_sequence_state_tracking(),
+        "experiment_h_transformer_pretrain": run_experiment_h_transformer_pretrain(),
     }
     if args.open_weights_model:
         report["experiment_d_open_weights_llm"] = run_experiment_d_open_weights_llm(args.open_weights_model)

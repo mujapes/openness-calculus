@@ -48,6 +48,17 @@ jobs:
             --open-weights-model "Qwen/Qwen2.5-0.5B" \
             --output-json results/benchmark_qwen25_05b.json
 
+          python -c "
+          import json
+          for p in ['results/benchmark_smollm2.json', 'results/benchmark_qwen25_05b.json']:
+              d = json.load(open(p))
+              exp_d = d['experiment_d_open_weights_llm']
+              assert exp_d['continuum_hierarchy_verified'], f'Failed hierarchy in {p}: {exp_d}'
+              assert exp_d['intrinsic_unsupervised_gauge_openness']['monotonic_intrinsic_ordering'], f'Failed intrinsic gauge ordering in {p}: {exp_d}'
+              assert d['experiment_h_transformer_pretrain']['compute_dividend_verified'], f'Failed compute dividend in {p}'
+          print('ALL OPEN-WEIGHTS LLM & TRANSFORMER PRETRAIN ASSERTIONS VERIFIED!')
+          "
+
       - name: Upload Empirical Benchmark Artifacts
         uses: actions/upload-artifact@v4
         with:

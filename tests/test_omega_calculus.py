@@ -14,6 +14,9 @@ from openness_calculus.emergent_superoperators import (
     run_experiment_f_emergent_superoperators,
     run_experiment_g_sequence_state_tracking,
 )
+from openness_calculus.transformer_pretrain import (
+    run_experiment_h_transformer_pretrain,
+)
 from openness_calculus.omega_layer import OmegaContinuumLayer, default_continuum_specs
 
 
@@ -62,6 +65,11 @@ class TestOmegaContinuum(unittest.TestCase):
         res = run_experiment_g_sequence_state_tracking(dim=32, seq_len=6)
         self.assertTrue(res["sequence_spillover_verified"], msg=f"Sequence spillover failed: {res}")
         self.assertGreater(res["cumulative_drift_reduction_factor"], 2.0)
+
+    def test_transformer_pretrain_compute_dividend(self) -> None:
+        res = run_experiment_h_transformer_pretrain(dim=32, seq_len=6, steps=160)
+        self.assertTrue(res["compute_dividend_verified"], msg=f"Compute dividend failed: {res}")
+        self.assertGreater(res["zero_shot_code_mse_improvement_ratio"], 1.3)
 
 
 if __name__ == "__main__":
