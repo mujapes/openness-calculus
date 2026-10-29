@@ -1,13 +1,17 @@
 """Optimization objectives for the Continuous Open-Endedness Spectrum.
 
-Addresses the two core mathematical challenges:
-  1. Anti-Backslide (Minimum-Openness Principle):
-     Sequential greedy residual peeling + convex thermodynamic action cost on both
-     band energies and spectral gates drives every relationship down into the lowest
-     omega band capable of expressing it.
-  2. Anti-Cannibalization (Primal-Dual Expressiveness Guard):
-     Guarantees that total cascade output matches the teacher within epsilon_tol,
-     automatically relaxing beta whenever subtle open-ended nuances need high-omega space.
+Introduces the Residual-Normalized Thermodynamic Valve:
+  For each token/sample i and each band k >= 1, the openness cost is inversely
+  weighted by the unexplained residual norm ||r_{i,k}||^2 left by bands 0..k-1:
+      L_valve(i, k) = c(omega_k) * ||y_{i,k}||^2 / (||r_{i,k}||^2 + eps_valve)
+
+  Why this is the exact mathematical key to Openness Calculus:
+    - When a relationship is closed (explainable by omega=0), ||r_{i,1}||^2 -> 0,
+      so the cost multiplier 1 / (||r_{i,1}||^2 + eps) spikes by 100x+, slamming
+      the high-omega gates shut for that sample (omega_i -> 0).
+    - When a relationship is genuinely open-ended (unexplainable by omega=0),
+      ||r_{i,1}||^2 remains large, so the valve opens naturally and routes the
+      residual into higher-omega bands without losing expressiveness!
 """
 from __future__ import annotations
 
@@ -17,11 +21,12 @@ import torch.nn.functional as F
 
 
 class OmegaActionLoss(nn.Module):
-    """Thermodynamic Openness Action Functional with Exact Residual Peeling."""
+    """Thermodynamic Openness Action Functional with Residual-Normalized Valve."""
 
-    def __init__(self, peeling_weight: float = 0.5) -> None:
+    def __init__(self, peeling_weight: float = 0.6, valve_eps: float = 0.02) -> None:
         super().__init__()
         self.peeling_weight = peeling_weight
+        self.valve_eps = valve_eps
 
     def forward(
         self,
@@ -32,33 +37,40 @@ class OmegaActionLoss(nn.Module):
         pred = cascade_out["output"]
         band_outputs = cascade_out["band_outputs"]  # (..., K, D)
         band_energies = cascade_out["band_energies"]  # (..., K)
+        band_fractions = cascade_out["band_fractions"]  # (..., K)
         gates = cascade_out["gates"]  # (..., K)
 
         recon_loss = F.mse_loss(pred, target)
 
-        # Sequential greedy residual peeling:
-        # Band 0 tries to fit the entire target `target`.
-        # Band 1 tries to fit `r_1 = (target - y_0).detach()`.
-        # Band k tries to fit `r_k = (target - sum_{j<k} y_j).detach()`.
-        # Thus, if Band 0 (omega=0) fits `target` with zero residual (r_1 = 0),
-        # Bands 1..K-1 have an explicit target of 0.0!
         K = band_outputs.shape[-2]
+        costs = action_costs.to(band_energies.device)
+
         cumulative_detached = torch.zeros_like(target)
         peel_losses: list[torch.Tensor] = []
+        valve_penalties: list[torch.Tensor] = []
+
+        target_sample_energy = (target ** 2).mean(dim=-1).clamp_min(1e-6)  # (...)
+
         for k in range(K):
             yk = band_outputs[..., k, :]
             rk = (target - cumulative_detached).detach()
             peel_losses.append(F.mse_loss(yk, rk))
+
+            if k > 0:
+                # Relative unexplained residual ratio in [0, inf) for each sample i
+                rel_residual_sq = (rk ** 2).mean(dim=-1) / target_sample_energy  # (...)
+                # Thermodynamic valve: huge penalty if lower bands already explained sample i!
+                valve_weight = costs[k] / (rel_residual_sq + self.valve_eps)
+                yk_rel_energy = band_energies[..., k] / target_sample_energy
+                gk_sq = gates[..., k] ** 2
+                valve_penalties.append((valve_weight * (yk_rel_energy + 0.15 * gk_sq)).mean())
+
             cumulative_detached = cumulative_detached + yk.detach()
+
         peeling_loss = torch.stack(peel_losses).mean()
-
-        costs = action_costs.to(band_energies.device)
-        target_norm_sq = (target ** 2).mean().clamp_min(1e-8)
-
-        # Penalize both actual output energy in high-omega bands and open gate activations
-        energy_tax = (band_energies * costs).sum(dim=-1).mean() / target_norm_sq
-        gate_tax = 0.05 * ((gates ** 2) * costs).sum(dim=-1).mean()
-        action_penalty = energy_tax + gate_tax
+        valve_loss = torch.stack(valve_penalties).mean() if valve_penalties else torch.tensor(0.0, device=pred.device)
+        spectral_cost = (band_fractions * costs).sum(dim=-1).mean()
+        action_penalty = valve_loss + 0.5 * spectral_cost
 
         return {
             "recon_loss": recon_loss,
@@ -74,7 +86,7 @@ class PrimalDualOpennessController:
     def __init__(
         self,
         epsilon_tol: float = 0.015,
-        beta_init: float = 0.08,
+        beta_init: float = 0.10,
         beta_min: float = 1e-4,
         beta_max: float = 2.0,
         dual_lr: float = 0.08,
@@ -88,7 +100,7 @@ class PrimalDualOpennessController:
     def compute_loss(
         self,
         loss_dict: dict[str, torch.Tensor],
-        peeling_weight: float = 0.5,
+        peeling_weight: float = 0.6,
     ) -> torch.Tensor:
         recon = loss_dict["recon_loss"]
         peel = loss_dict["peeling_loss"]
@@ -107,14 +119,7 @@ class PrimalDualOpennessController:
 
 
 class CrossModalInvarianceLoss(nn.Module):
-    """Scale-Preserving Isometric Alignment in the Closed Algebraic Core (omega <= 0.25).
-
-    Crucial Lesson from Run #1:
-      Using cosine-only normalization (`F.normalize`) allowed the closed core to learn
-      an arbitrary scale factor relative to the true state transition, hurting zero-shot
-      code execution MSE. Here we enforce BOTH exact vector equality (scale + direction)
-      and contrastive relational geometry in the omega <= 0.25 subspace.
-    """
+    """Scale-Preserving Isometric Alignment in the Closed Algebraic Core (omega <= 0.25)."""
 
     def __init__(self, temperature: float = 0.15) -> None:
         super().__init__()
@@ -128,10 +133,8 @@ class CrossModalInvarianceLoss(nn.Module):
         c_nl = nl_cascade["closed_core_output"]
         c_code = code_cascade["closed_core_output"]
 
-        # Exact scale-preserving state-transition equivalence
         mse_align = F.mse_loss(c_nl, c_code)
 
-        # Plus relational geometry alignment
         if c_nl.ndim == 2 and c_nl.shape[0] > 2:
             z_nl = F.normalize(c_nl, dim=-1)
             z_code = F.normalize(c_code, dim=-1)

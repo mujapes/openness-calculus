@@ -96,14 +96,16 @@ def run_experiment_a_minimum_openness(dim: int = 48, steps: int = 240) -> dict[s
     open_w2 = torch.randn(dim, dim) / math.sqrt(dim)
 
     def teacher_transform(x: torch.Tensor, regime: str) -> torch.Tensor:
+        # The universal closed law applies across all states; higher-openness regimes
+        # introduce additional bounded relational and high-entropy pragmatic deviations.
         base = x @ skew_true
         if regime == "closed_logic":
             return base
         rel = torch.tanh(x @ rel_down) @ rel_up
         if regime == "bounded_relational":
-            return 0.45 * base + 0.85 * rel
-        open_part = torch.sin(x @ open_w1) + 0.5 * torch.cos(x @ open_w2)
-        return 0.20 * base + 0.30 * rel + 1.10 * open_part
+            return base + 0.90 * rel
+        open_part = torch.sin(x @ open_w1) + 0.7 * torch.cos(x @ open_w2)
+        return base + 0.50 * rel + 1.60 * open_part
 
     layer = OmegaContinuumLayer(dim=dim, specs=specs, enable_emergent_above_one=False)
     loss_fn = OmegaActionLoss(peeling_weight=0.6)
