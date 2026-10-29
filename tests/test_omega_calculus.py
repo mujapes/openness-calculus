@@ -8,6 +8,7 @@ from openness_calculus.distill_open_weights import (
     run_experiment_a_minimum_openness,
     run_experiment_b_anti_cannibalization,
     run_experiment_c_code_spillover,
+    run_experiment_e_bidirectional_duality,
 )
 from openness_calculus.omega_layer import OmegaContinuumLayer, default_continuum_specs
 
@@ -33,7 +34,7 @@ class TestOmegaContinuum(unittest.TestCase):
         self.assertTrue((out["mean_openness"] <= 1.0).all())
 
     def test_minimum_openness_sorting(self) -> None:
-        res = run_experiment_a_minimum_openness(dim=48, steps=180)
+        res = run_experiment_a_minimum_openness(dim=48, steps=260)
         self.assertTrue(res["monotonic_ordering_verified"], msg=f"Failed ordering: {res}")
         self.assertLess(res["closed_logic_mean_omega"], res["open_pragmatic_mean_omega"])
 
@@ -45,6 +46,10 @@ class TestOmegaContinuum(unittest.TestCase):
         res = run_experiment_c_code_spillover(dim=36)
         self.assertTrue(res["spillover_verified"], msg=f"Spillover check failed: {res}")
         self.assertGreater(res["spillover_speedup_ratio"], 1.15)
+
+    def test_bidirectional_omega_duality(self) -> None:
+        res = run_experiment_e_bidirectional_duality(dim=36, steps=200)
+        self.assertTrue(res["bidirectional_duality_verified"], msg=f"Duality check failed: {res}")
 
 
 if __name__ == "__main__":

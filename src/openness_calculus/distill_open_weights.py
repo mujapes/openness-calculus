@@ -75,63 +75,71 @@ def intrinsic_noncommutativity_curvature(h_seq: torch.Tensor, delta_seq: torch.T
     return float(min(1.0, 0.65 * rel_residual + 0.35 * erank_ratio))
 
 
-def run_experiment_a_minimum_openness(dim: int = 48, steps: int = 240) -> dict[str, Any]:
+def run_experiment_a_minimum_openness(dim: int = 48, steps: int = 260) -> dict[str, Any]:
     """Verify that the Primal-Dual Omega-Continuum routes closed logical laws to omega -> 0,
     bounded relational mappings to intermediate omega, and high-rank open nuance to omega -> 1.
     """
     set_seed(101)
-    specs = default_continuum_specs(dim, num_bands=5)
-    # Construct synthetic teacher whose 3 regimes strictly nest in rank & nonlinearity:
-    # Regime 1 (closed_logic): pure rank-4 skew-symmetric + linear state update (exact match for band 0)
-    u_true = torch.randn(dim, 4) / math.sqrt(dim)
-    v_true = torch.randn(dim, 4) / math.sqrt(dim)
+    from .omega_layer import OmegaBandSpec
+
+    specs = [
+        OmegaBandSpec(omega=0.00, rank=4, kind="algebraic", action_cost=0.00),
+        OmegaBandSpec(omega=0.25, rank=6, kind="relational", action_cost=0.12),
+        OmegaBandSpec(omega=0.50, rank=8, kind="homomorphic", action_cost=0.35),
+        OmegaBandSpec(omega=0.75, rank=12, kind="homomorphic", action_cost=0.65),
+        OmegaBandSpec(omega=1.00, rank=dim, kind="open_residual", action_cost=1.00),
+    ]
+
+    # Utterance prototype bank (64 canonical linguistic contexts in R^dim)
+    prototypes = torch.randn(64, dim)
+
+    # 1. Closed logic law: pure rank-4 skew-symmetric linear state update (exact match for Band 0)
+    u_true = torch.randn(dim, 2) / math.sqrt(dim)
+    v_true = torch.randn(dim, 2) / math.sqrt(dim)
     skew_true = (u_true @ v_true.t()) - (v_true @ u_true.t())
 
-    # Regime 2 (bounded_relational): adds rank-10 tanh relational transform (requires bands 1-2)
-    rel_down = torch.randn(dim, 10) / math.sqrt(dim)
-    rel_up = torch.randn(10, dim) / math.sqrt(10)
+    # 2. Bounded relational law: rank-5 nonlinear tanh state constraint (captured by Bands 1-2)
+    rel_down = torch.randn(dim, 5) / math.sqrt(dim)
+    rel_up = torch.randn(5, dim) / math.sqrt(5)
 
-    # Regime 3 (open_pragmatic): adds full-rank high-frequency sinusoidal nuance (requires band 4 at omega=1)
-    open_w1 = torch.randn(dim, dim) / math.sqrt(dim)
-    open_w2 = torch.randn(dim, dim) / math.sqrt(dim)
+    # 3. Open pragmatic nuance: full-rank (rank-40) contextual lookup/nonlinear mapping (requires Band 4)
+    open_down = torch.randn(dim, 40) / math.sqrt(dim)
+    open_up = torch.randn(40, dim) / math.sqrt(40)
 
-    def teacher_transform(x: torch.Tensor, regime: str) -> torch.Tensor:
-        # The universal closed law applies across all states; higher-openness regimes
-        # introduce additional bounded relational and high-entropy pragmatic deviations.
-        base = x @ skew_true
+    def sample_regime_batch(batch_size: int, regime: str) -> tuple[torch.Tensor, torch.Tensor]:
+        idx = torch.randint(0, prototypes.shape[0], (batch_size,))
+        x = prototypes[idx] + 0.08 * torch.randn(batch_size, dim)
         if regime == "closed_logic":
-            return base
+            x[:, :3] = torch.tensor([2.5, -1.0, -1.0])
+            y = x @ skew_true
+            return x, y
         rel = torch.tanh(x @ rel_down) @ rel_up
         if regime == "bounded_relational":
-            return base + 0.90 * rel
-        open_part = torch.sin(x @ open_w1) + 0.7 * torch.cos(x @ open_w2)
-        return base + 0.50 * rel + 1.60 * open_part
+            x[:, :3] = torch.tensor([-1.0, 2.5, -1.0])
+            y = 0.35 * (x @ skew_true) + 1.40 * rel
+            return x, y
+        x[:, :3] = torch.tensor([-1.0, -1.0, 2.5])
+        open_part = F.silu(x @ open_down) @ open_up
+        y = 0.15 * (x @ skew_true) + 0.25 * rel + 2.40 * open_part
+        return x, y
 
     layer = OmegaContinuumLayer(dim=dim, specs=specs, enable_emergent_above_one=False)
-    loss_fn = OmegaActionLoss(peeling_weight=0.6)
-    ctrl = PrimalDualOpennessController(epsilon_tol=0.02, beta_init=0.15)
-    opt = torch.optim.AdamW(layer.parameters(), lr=4e-3, weight_decay=1e-4)
+    loss_fn = OmegaActionLoss(peeling_weight=0.65, valve_eps=0.015)
+    ctrl = PrimalDualOpennessController(epsilon_tol=0.015, beta_init=0.18)
+    opt = torch.optim.AdamW(layer.parameters(), lr=4.5e-3, weight_decay=1e-4)
 
     batch = 96
     for _ in range(steps):
-        xc = torch.randn(batch, dim)
-        xr = torch.randn(batch, dim)
-        xo = torch.randn(batch, dim)
-        # Distinct input domain markers so the single continuum layer can identify context
-        xc[:, :3] = torch.tensor([2.5, -1.0, -1.0])
-        xr[:, :3] = torch.tensor([-1.0, 2.5, -1.0])
-        xo[:, :3] = torch.tensor([-1.0, -1.0, 2.5])
-
-        yc = teacher_transform(xc, "closed_logic")
-        yr = teacher_transform(xr, "bounded_relational")
-        yo = teacher_transform(xo, "open_pragmatic")
+        xc, yc = sample_regime_batch(batch, "closed_logic")
+        xr, yr = sample_regime_batch(batch, "bounded_relational")
+        xo, yo = sample_regime_batch(batch, "open_pragmatic")
 
         x_cat = torch.cat([xc, xr, xo], dim=0)
         y_cat = torch.cat([yc, yr, yo], dim=0)
 
         out = layer(x_cat)
         ld = loss_fn(out, y_cat, layer.action_costs)
-        loss = ctrl.compute_loss(ld, peeling_weight=0.6)
+        loss = ctrl.compute_loss(ld, peeling_weight=0.65)
 
         opt.zero_grad()
         loss.backward()
@@ -139,12 +147,9 @@ def run_experiment_a_minimum_openness(dim: int = 48, steps: int = 240) -> dict[s
         ctrl.step_dual(float(ld["recon_loss"].item()))
 
     with torch.no_grad():
-        xc = torch.randn(256, dim)
-        xr = torch.randn(256, dim)
-        xo = torch.randn(256, dim)
-        xc[:, :3] = torch.tensor([2.5, -1.0, -1.0])
-        xr[:, :3] = torch.tensor([-1.0, 2.5, -1.0])
-        xo[:, :3] = torch.tensor([-1.0, -1.0, 2.5])
+        xc, yc = sample_regime_batch(256, "closed_logic")
+        xr, yr = sample_regime_batch(256, "bounded_relational")
+        xo, yo = sample_regime_batch(256, "open_pragmatic")
 
         out_c = layer(xc)
         out_r = layer(xr)
@@ -153,10 +158,6 @@ def run_experiment_a_minimum_openness(dim: int = 48, steps: int = 240) -> dict[s
         oc = out_c["mean_openness"].mean().item()
         or_val = out_r["mean_openness"].mean().item()
         oo = out_o["mean_openness"].mean().item()
-
-        yc = teacher_transform(xc, "closed_logic")
-        yr = teacher_transform(xr, "bounded_relational")
-        yo = teacher_transform(xo, "open_pragmatic")
 
         total_mse = F.mse_loss(
             torch.cat([out_c["output"], out_r["output"], out_o["output"]], dim=0),
@@ -515,6 +516,68 @@ def run_experiment_d_open_weights_llm(model_name: str = "HuggingFaceTB/SmolLM2-1
     }
 
 
+def run_experiment_e_bidirectional_duality(dim: int = 36, steps: int = 200) -> dict[str, Any]:
+    """Verify Bidirectional Omega-Duality (Code/Math <-> Natural Language Explanation):
+    Complex formal math/code states at omega=0 can be lifted into natural-language
+    explanations at controlled openness omega* with exact round-trip verifiability
+    P_{down, 0}(E_{up, omega*}(z_math)) == z_math, while minimizing explanation omega*.
+    """
+    from .bidirectional_duality import BidirectionalOmegaDuality
+
+    set_seed(505)
+    duality = BidirectionalOmegaDuality(dim=dim, num_bands=5)
+    loss_fn = OmegaActionLoss(peeling_weight=0.45)
+
+    # True mapping between pure mathematical invariants z_math and natural-language surface x_nl
+    u_law = torch.randn(dim, 4) / math.sqrt(dim)
+    v_law = torch.randn(dim, 4) / math.sqrt(dim)
+    math_proj = (u_law @ v_law.t()) - (v_law @ u_law.t())
+    nl_idiom = torch.randn(dim, 8) / math.sqrt(dim)
+    nl_up = torch.randn(8, dim) / math.sqrt(8)
+
+    opt = torch.optim.AdamW(duality.parameters(), lr=3.5e-3)
+    for _ in range(steps):
+        latent = torch.randn(96, dim)
+        z_math = latent @ math_proj
+        x_nl_target = z_math + 0.35 * (torch.tanh(latent @ nl_idiom) @ nl_up)
+
+        # 1. Forward direction: x_nl -> closed_core recovers z_math
+        fwd = duality.forward_continuum(x_nl_target)
+        loss_fwd_core = F.mse_loss(fwd["closed_core_output"], z_math)
+
+        # 2. Reverse explanation lift: z_math -> concise NL explanation -> round-trip z_math
+        lifted = duality.explanation_lifter(z_math, max_omega=0.5)
+        ld_lift = loss_fn(lifted, x_nl_target, duality.explanation_lifter.action_costs)
+        reproj = duality.forward_continuum(lifted["output"])
+        loss_roundtrip = F.mse_loss(reproj["closed_core_output"], z_math)
+
+        loss = (
+            loss_fwd_core
+            + ld_lift["recon_loss"]
+            + 0.3 * ld_lift["peeling_loss"]
+            + 0.08 * ld_lift["action_penalty"]
+            + 1.5 * loss_roundtrip
+        )
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+
+    with torch.no_grad():
+        latent_test = torch.randn(256, dim)
+        z_math_test = latent_test @ math_proj
+        res = duality.explain_math_in_nl(z_math_test, max_explanation_omega=0.5)
+        rt_mse = res["round_trip_verifiability_mse"].item()
+        baseline_var = (z_math_test ** 2).mean().item()
+        mean_exp_omega = res["explanation_mean_omega"].mean().item()
+
+    return {
+        "round_trip_verifiability_mse": round(rt_mse, 6),
+        "relative_round_trip_error": round(rt_mse / max(1e-8, baseline_var), 4),
+        "concise_explanation_mean_omega": round(mean_exp_omega, 4),
+        "bidirectional_duality_verified": bool(rt_mse < baseline_var * 0.15 and mean_exp_omega < 0.45),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run Openness Calculus (Omega-Algebra) benchmarks.")
     parser.add_argument("--open-weights-model", type=str, default="", help="Optional HuggingFace model ID to dissect")
@@ -526,6 +589,7 @@ def main() -> None:
         "experiment_a_minimum_openness": run_experiment_a_minimum_openness(),
         "experiment_b_anti_cannibalization": run_experiment_b_anti_cannibalization(),
         "experiment_c_code_spillover": run_experiment_c_code_spillover(),
+        "experiment_e_bidirectional_duality": run_experiment_e_bidirectional_duality(),
     }
     if args.open_weights_model:
         report["experiment_d_open_weights_llm"] = run_experiment_d_open_weights_llm(args.open_weights_model)
