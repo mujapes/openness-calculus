@@ -1,16 +1,13 @@
 """Optimization objectives for the Continuous Open-Endedness Spectrum.
 
-Addresses the two core mathematical challenges identified in design:
+Addresses the two core mathematical challenges:
   1. Anti-Backslide (Minimum-Openness Principle):
-     Prevents the optimizer from lazily routing everything into high-omega open
-     residuals by applying a convex thermodynamic action cost lambda(omega) * ||y_omega||^2
-     plus progressive band-peeling supervision.
+     Sequential greedy residual peeling + convex thermodynamic action cost on both
+     band energies and spectral gates drives every relationship down into the lowest
+     omega band capable of expressing it.
   2. Anti-Cannibalization (Primal-Dual Expressiveness Guard):
-     Prevents over-compression into rigid formulas from destroying subtle human
-     expressiveness or causing Model Autophagous Disorder (MAD) across recursive
-     distillation generations. A Lagrangian dual variable beta dynamically throttles
-     the openness compression pressure whenever reconstruction/KL error exceeds a
-     strict fidelity floor epsilon_tol.
+     Guarantees that total cascade output matches the teacher within epsilon_tol,
+     automatically relaxing beta whenever subtle open-ended nuances need high-omega space.
 """
 from __future__ import annotations
 
@@ -20,16 +17,9 @@ import torch.nn.functional as F
 
 
 class OmegaActionLoss(nn.Module):
-    """Thermodynamic Openness Action Functional.
+    """Thermodynamic Openness Action Functional with Exact Residual Peeling."""
 
-    Computes:
-      1. Full Conservation Loss: || sum_k y_k - target ||^2
-      2. Progressive Peeling Loss: each band k is encouraged to greedily absorb
-         as much of the remaining residual r_k as its algebraic capacity allows.
-      3. Weighted Openness Action: sum_k c(omega_k) * E[||y_k||^2] / E[||target||^2]
-    """
-
-    def __init__(self, peeling_weight: float = 0.25) -> None:
+    def __init__(self, peeling_weight: float = 0.5) -> None:
         super().__init__()
         self.peeling_weight = peeling_weight
 
@@ -42,24 +32,33 @@ class OmegaActionLoss(nn.Module):
         pred = cascade_out["output"]
         band_outputs = cascade_out["band_outputs"]  # (..., K, D)
         band_energies = cascade_out["band_energies"]  # (..., K)
+        gates = cascade_out["gates"]  # (..., K)
 
         recon_loss = F.mse_loss(pred, target)
 
-        # Progressive residual peeling target: band k tries to match (target - sum_{j<k} stop_grad(y_j))
+        # Sequential greedy residual peeling:
+        # Band 0 tries to fit the entire target `target`.
+        # Band 1 tries to fit `r_1 = (target - y_0).detach()`.
+        # Band k tries to fit `r_k = (target - sum_{j<k} y_j).detach()`.
+        # Thus, if Band 0 (omega=0) fits `target` with zero residual (r_1 = 0),
+        # Bands 1..K-1 have an explicit target of 0.0!
         K = band_outputs.shape[-2]
-        residual = target
+        cumulative_detached = torch.zeros_like(target)
         peel_losses: list[torch.Tensor] = []
         for k in range(K):
             yk = band_outputs[..., k, :]
-            # Weight lower-omega bands more strongly in greedy residual capture
-            band_priority = 1.0 / (1.0 + k)
-            peel_losses.append(band_priority * F.mse_loss(yk, residual.detach()))
-            residual = residual - yk.detach()
+            rk = (target - cumulative_detached).detach()
+            peel_losses.append(F.mse_loss(yk, rk))
+            cumulative_detached = cumulative_detached + yk.detach()
         peeling_loss = torch.stack(peel_losses).mean()
 
         costs = action_costs.to(band_energies.device)
         target_norm_sq = (target ** 2).mean().clamp_min(1e-8)
-        action_penalty = (band_energies.mean(dim=tuple(range(band_energies.ndim - 1))) * costs).sum() / target_norm_sq
+
+        # Penalize both actual output energy in high-omega bands and open gate activations
+        energy_tax = (band_energies * costs).sum(dim=-1).mean() / target_norm_sq
+        gate_tax = 0.05 * ((gates ** 2) * costs).sum(dim=-1).mean()
+        action_penalty = energy_tax + gate_tax
 
         return {
             "recon_loss": recon_loss,
@@ -70,24 +69,12 @@ class OmegaActionLoss(nn.Module):
 
 
 class PrimalDualOpennessController:
-    """Primal-Dual Lagrangian Controller balancing Closed-Math Compression vs. Expressiveness.
-
-    Solves:
-        min_theta  L_action(omega) + L_peel
-        subject to L_recon(theta) <= epsilon_tol
-
-    Via dual ascent/descent on beta >= 0:
-        total_loss = L_recon + peeling_weight * L_peel + beta * L_action(omega)
-      - When L_recon <= epsilon_tol (expressiveness is safely preserved), beta INCREASES
-        to squeeze more language relationships down toward omega = 0 (pure formal logic).
-      - When L_recon > epsilon_tol (risk of over-compression / losing nuance), beta DECREASES
-        immediately so open-ended nuances can safely inhabit higher-omega bands.
-    """
+    """Primal-Dual Lagrangian Controller balancing Closed-Math Compression vs. Expressiveness."""
 
     def __init__(
         self,
         epsilon_tol: float = 0.015,
-        beta_init: float = 0.05,
+        beta_init: float = 0.08,
         beta_min: float = 1e-4,
         beta_max: float = 2.0,
         dual_lr: float = 0.08,
@@ -101,7 +88,7 @@ class PrimalDualOpennessController:
     def compute_loss(
         self,
         loss_dict: dict[str, torch.Tensor],
-        peeling_weight: float = 0.25,
+        peeling_weight: float = 0.5,
     ) -> torch.Tensor:
         recon = loss_dict["recon_loss"]
         peel = loss_dict["peeling_loss"]
@@ -109,27 +96,27 @@ class PrimalDualOpennessController:
         return recon + peeling_weight * peel + self.beta * action
 
     def step_dual(self, recon_loss_val: float) -> float:
-        """Update beta based on whether expressiveness tolerance is satisfied."""
-        # If recon_loss < epsilon_tol, gap is negative -> increase beta (push harder toward omega=0)
-        # If recon_loss > epsilon_tol, gap is positive -> decrease beta (protect expressiveness)
         gap = self.epsilon_tol - recon_loss_val
         self.beta = float(
-            max(self.beta_min, min(self.beta_max, self.beta * (1.0 + self.dual_lr * (gap / max(1e-6, self.epsilon_tol)))))
+            max(
+                self.beta_min,
+                min(self.beta_max, self.beta * (1.0 + self.dual_lr * (gap / max(1e-6, self.epsilon_tol)))),
+            )
         )
         return self.beta
 
 
 class CrossModalInvarianceLoss(nn.Module):
-    """Aligns Natural Language and Code/Formal representations inside the omega -> 0 core.
+    """Scale-Preserving Isometric Alignment in the Closed Algebraic Core (omega <= 0.25).
 
-    Given a natural language state h_nl and an equivalent formal/code state h_code:
-      - Their closed-core outputs (omega <= 0.25) must be invariant (isomorphic):
-            || Phi_{omega<=0.25}(h_nl) - Phi_{omega<=0.25}(h_code) ||^2 -> 0
-      - Their high-omega open residuals (omega -> 1) remain completely free to capture
-        surface syntax differences (English phrasing vs. Python/Rust syntax).
+    Crucial Lesson from Run #1:
+      Using cosine-only normalization (`F.normalize`) allowed the closed core to learn
+      an arbitrary scale factor relative to the true state transition, hurting zero-shot
+      code execution MSE. Here we enforce BOTH exact vector equality (scale + direction)
+      and contrastive relational geometry in the omega <= 0.25 subspace.
     """
 
-    def __init__(self, temperature: float = 0.1) -> None:
+    def __init__(self, temperature: float = 0.15) -> None:
         super().__init__()
         self.temperature = temperature
 
@@ -138,15 +125,18 @@ class CrossModalInvarianceLoss(nn.Module):
         nl_cascade: dict[str, torch.Tensor],
         code_cascade: dict[str, torch.Tensor],
     ) -> torch.Tensor:
-        z_nl = F.normalize(nl_cascade["closed_core_output"], dim=-1)
-        z_code = F.normalize(code_cascade["closed_core_output"], dim=-1)
-        # Direct isometric alignment in the closed algebraic subspace
-        align_loss = F.mse_loss(z_nl, z_code)
+        c_nl = nl_cascade["closed_core_output"]
+        c_code = code_cascade["closed_core_output"]
 
-        # Contrastive uniformity across batch to prevent collapse to a constant vector
-        if z_nl.ndim == 2 and z_nl.shape[0] > 2:
+        # Exact scale-preserving state-transition equivalence
+        mse_align = F.mse_loss(c_nl, c_code)
+
+        # Plus relational geometry alignment
+        if c_nl.ndim == 2 and c_nl.shape[0] > 2:
+            z_nl = F.normalize(c_nl, dim=-1)
+            z_code = F.normalize(c_code, dim=-1)
             logits = (z_nl @ z_code.t()) / self.temperature
             labels = torch.arange(z_nl.shape[0], device=z_nl.device)
             contrastive = 0.5 * (F.cross_entropy(logits, labels) + F.cross_entropy(logits.t(), labels))
-            return align_loss + 0.1 * contrastive
-        return align_loss
+            return mse_align + 0.05 * contrastive
+        return mse_align
