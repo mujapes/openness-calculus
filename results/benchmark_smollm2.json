@@ -151,7 +151,7 @@
     "full_transition_reconstruction_cosine": 0.9998,
     "zero_shot_raw_llm_code_probe_mse": 0.09684,
     "zero_shot_omega_core_code_probe_mse": 0.0001,
-    "zero_shot_probe_improvement_ratio": 982.48,
+    "zero_shot_probe_improvement_ratio": 982.47,
     "cross_modal_alignment_verified": true
   },
   "experiment_l_held_out_code_spillover": {
@@ -160,6 +160,28 @@
     "novel_domain_prose_reconstruction_mse": 0.00826,
     "novel_domain_code_spillover_ratio": 9.98,
     "unpaired_novel_domain_spillover_verified": true
+  },
+  "experiment_m_reverse_explanation_selection": {
+    "concise_mean_omega": 0.0002,
+    "verbose_mean_omega": 0.176,
+    "concise_verification_mse": 0.0,
+    "verbose_verification_mse": 0.0002,
+    "corrupted_verification_mse": 4.24787,
+    "j_explain_concise": 0.0001,
+    "j_explain_verbose": 0.0706,
+    "j_explain_corrupted": 4.2479,
+    "top1_concise_selection_accuracy": 1.0,
+    "reverse_explanation_selection_verified": true
+  },
+  "experiment_n_mdl_law_discovery": {
+    "true_algebraic_rank": 4,
+    "dense_discovered_effective_rank": 29.97,
+    "omega_core_discovered_effective_rank": 3.99,
+    "spectral_weight_compression_ratio": 7.52,
+    "dense_formal_test_mse": 0.4694,
+    "omega_core_formal_test_mse": 0.08617,
+    "formal_generalization_improvement_ratio": 5.45,
+    "mdl_law_discovery_verified": true
   },
   "experiment_d_open_weights_llm": {
     "model_name": "HuggingFaceTB/SmolLM2-135M",
@@ -208,23 +230,32 @@
       }
     },
     "distilled_omega_profile": {
-      "omega_formal_code": 0.407,
-      "omega_causal_prose": 0.4438,
-      "omega_open_poetry_irony": 0.5926
+      "omega_formal_code": 0.4003,
+      "omega_causal_prose": 0.4307,
+      "omega_open_poetry_irony": 0.5843
     },
     "llm_cross_modal_code_prose_alignment": {
       "raw_prose_code_cosine_similarity": 0.7421,
       "omega_closed_core_prose_code_cosine_similarity": 0.9999,
       "full_transition_reconstruction_cosine": 0.9999,
-      "zero_shot_raw_llm_code_probe_mse": 0.29013,
+      "zero_shot_raw_llm_code_probe_mse": 0.29011,
       "zero_shot_omega_core_code_probe_mse": 9e-05,
-      "zero_shot_probe_improvement_ratio": 3269.01,
+      "zero_shot_probe_improvement_ratio": 3056.95,
       "cross_modal_alignment_verified": true
     },
-    "distillation_normalized_mse": 0.01692,
-    "distillation_cosine_similarity": 0.9592,
+    "llm_reverse_explanation_ranking": {
+      "intrinsic_omega_concise_nl": 0.3693,
+      "intrinsic_omega_verbose_nl": 0.6467,
+      "mean_j_explain_concise": 0.1162,
+      "mean_j_explain_verbose": 0.2123,
+      "mean_j_explain_corrupted": 1.3107,
+      "concise_explanation_top1_accuracy": 1.0,
+      "reverse_explanation_ranking_verified": true
+    },
+    "distillation_normalized_mse": 0.02029,
+    "distillation_cosine_similarity": 0.958,
     "continuum_hierarchy_verified": true,
-    "elapsed_sec": 65.9
+    "elapsed_sec": 59.8
   },
-  "total_runtime_sec": 93.86
+  "total_runtime_sec": 74.15
 }
