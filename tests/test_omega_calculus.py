@@ -36,6 +36,9 @@ from openness_calculus.rsi_flywheel import (
 from openness_calculus.vibe_telephone import (
     run_experiment_q_automated_telephone_game,
 )
+from openness_calculus.lexical_calculus import (
+    verify_lexical_calculus,
+)
 from openness_calculus.omega_layer import OmegaContinuumLayer, default_continuum_specs
 
 
@@ -135,6 +138,12 @@ class TestOmegaContinuum(unittest.TestCase):
         self.assertTrue(res["telephone_game_verified"], msg=f"Telephone game failed: {res}")
         self.assertTrue(res["all_winners_reconstruct_exact_code"])
         self.assertLess(res["mean_best_w"], 0.06)
+
+    def test_tiered_lexical_calculus(self) -> None:
+        res = verify_lexical_calculus()
+        self.assertTrue(res["lexical_calculus_verified"], msg=f"Lexical calculus failed: {res}")
+        self.assertEqual(res["collision_rate"], 0.0)
+        self.assertEqual(res["mutants_rejected"], res["total_mutants_tested"])
 
 
 if __name__ == "__main__":

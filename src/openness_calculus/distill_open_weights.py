@@ -693,6 +693,7 @@ def main() -> None:
         run_experiment_p_bidirectional_rsi_flywheel,
     )
     from .vibe_telephone import run_experiment_q_automated_telephone_game
+    from .lexical_calculus import verify_lexical_calculus
 
     parser = argparse.ArgumentParser(description="Run Openness Calculus (Omega-Algebra) benchmarks.")
     parser.add_argument("--open-weights-model", type=str, default="", help="Optional HuggingFace model ID to dissect")
@@ -717,6 +718,7 @@ def main() -> None:
         "experiment_o_compositional_program_synthesis": run_experiment_o_compositional_program_synthesis(),
         "experiment_p_bidirectional_rsi_flywheel": run_experiment_p_bidirectional_rsi_flywheel(),
         "experiment_q_automated_telephone_game": run_experiment_q_automated_telephone_game(),
+        "experiment_r_tiered_lexical_calculus": verify_lexical_calculus(),
     }
     if args.open_weights_model:
         report["experiment_d_open_weights_llm"] = run_experiment_d_open_weights_llm(args.open_weights_model)
