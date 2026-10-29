@@ -143,7 +143,9 @@ class TestOmegaContinuum(unittest.TestCase):
         res = verify_lexical_calculus()
         self.assertTrue(res["lexical_calculus_verified"], msg=f"Lexical calculus failed: {res}")
         self.assertEqual(res["collision_rate"], 0.0)
+        self.assertEqual(res["cross_word_collisions"], 0)
         self.assertEqual(res["mutants_rejected"], res["total_mutants_tested"])
+        self.assertGreaterEqual(res["total_words"], 36)
 
 
 if __name__ == "__main__":
