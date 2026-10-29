@@ -72,14 +72,12 @@ def run_experiment_o_compositional_program_synthesis(
         centered_q = (x @ quad_u) * (x @ quad_v) - (quad_u * quad_v).sum(dim=0, keepdim=True)
         return 0.35 * (centered_q @ quad_w)
 
-    # Build individual-rule natural-language training sets (N=64 per rule, never composed)
+    # Build individual-rule natural-language training sets (N=96 per rule, never composed)
     train_x, train_y = [], []
     for r_mat in rules:
-        z_core = torch.randn(64, reg_rank)
-        x_perp = 0.35 * torch.randn(64, dim)
-        x = (z_core @ v_reg.t()) + x_perp
+        x = torch.randn(96, dim)
         y_clean = x @ r_mat
-        y_nl = y_clean + nl_pragmatic_nuance(x) + 0.32 * torch.randn(64, dim)
+        y_nl = y_clean + nl_pragmatic_nuance(x) + 0.25 * torch.randn(96, dim)
         train_x.append(x)
         train_y.append(y_nl)
 
@@ -144,9 +142,9 @@ def run_experiment_o_compositional_program_synthesis(
         for r_idx in range(3):
             a0_raw = omega_rules[r_idx].bands[0](eye)
             u_s, s_s, vh_s = torch.linalg.svd(a0_raw, full_matrices=False)
-            # Project onto the top reg_rank singular modes above the Marchenko-Pastur bulk
+            # Isometric Lie-subspace renormalization on the top reg_rank singular modes
             s_top = torch.zeros_like(s_s)
-            s_top[:reg_rank] = s_s[:reg_rank]
+            s_top[:reg_rank] = 1.0
             crystallized_ops.append((u_s * s_top.unsqueeze(0)) @ vh_s)
 
         z_test = torch.randn(512, reg_rank)
